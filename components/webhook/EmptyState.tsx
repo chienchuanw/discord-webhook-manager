@@ -43,8 +43,7 @@ export function EmptyState({ onAddWebhook }: EmptyStateProps) {
 
         {/* 說明文字 */}
         <p className="mb-8 text-muted-foreground">
-          開始建立你的第一個 Discord Webhook，輕鬆管理訊息發送、
-          排程任務，並追蹤每次發送的狀態。
+          開始建立你的第一個 Discord Webhook，輕鬆管理訊息發送與排程任務。
         </p>
 
         {/* 功能說明列表 */}
@@ -56,10 +55,6 @@ export function EmptyState({ onAddWebhook }: EmptyStateProps) {
           <FeatureItem
             title="排程發送"
             description="設定自動化訊息排程，定時發送通知"
-          />
-          <FeatureItem
-            title="追蹤狀態"
-            description="即時查看每個 Webhook 的發送統計"
           />
         </div>
 

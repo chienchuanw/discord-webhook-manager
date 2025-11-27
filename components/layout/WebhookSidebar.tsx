@@ -38,8 +38,6 @@ export interface WebhookItem {
   name: string;
   isActive: boolean;
   lastUsed?: string;
-  successCount: number;
-  failCount: number;
 }
 
 interface WebhookSidebarProps {

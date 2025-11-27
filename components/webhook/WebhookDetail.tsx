@@ -1,18 +1,7 @@
 "use client";
 
 import * as React from "react";
-import {
-  Calendar,
-  Clock,
-  CheckCircle2,
-  XCircle,
-  Copy,
-  ExternalLink,
-  Send,
-  Settings,
-  Trash2,
-  Power,
-} from "lucide-react";
+import { Copy, Send, Settings, Trash2 } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -161,48 +150,7 @@ export function WebhookDetail({
               </div>
             </CardContent>
           </Card>
-
-          {/* 統計資訊卡片 */}
-          <Card className="border-border bg-card">
-            <CardHeader>
-              <CardTitle className="text-base">使用統計</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 gap-4">
-                <StatItem
-                  label="成功發送"
-                  value={webhook.successCount}
-                  color="text-discord-green"
-                />
-                <StatItem
-                  label="發送失敗"
-                  value={webhook.failCount}
-                  color="text-discord-red"
-                />
-              </div>
-            </CardContent>
-          </Card>
         </div>
-      </div>
-    </div>
-  );
-}
-
-/* 統計項目子元件 */
-function StatItem({
-  label,
-  value,
-  color,
-}: {
-  label: string;
-  value: number;
-  color: string;
-}) {
-  return (
-    <div className="flex items-center gap-3 rounded-lg bg-muted/50 p-4">
-      <div>
-        <p className="text-xs text-muted-foreground">{label}</p>
-        <p className={`text-2xl font-bold ${color}`}>{value}</p>
       </div>
     </div>
   );
