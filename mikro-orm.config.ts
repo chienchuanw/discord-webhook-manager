@@ -1,5 +1,6 @@
 import { defineConfig } from "@mikro-orm/postgresql";
 import { Migrator } from "@mikro-orm/migrations";
+import { SqlHighlighter } from "@mikro-orm/sql-highlighter";
 import * as dotenv from "dotenv";
 import { Webhook } from "./db/entities/Webhook";
 import { MessageLog } from "./db/entities/MessageLog";
@@ -26,8 +27,11 @@ export default defineConfig({
   // Entity 類別（直接引入，避免 glob 路徑問題）
   entities: [Webhook, MessageLog],
 
-  // 開發模式設定
+  // 開發模式設定（非 production 環境啟用 debug 日誌）
   debug: process.env.NODE_ENV !== "production",
+
+  // SQL 語法高亮（讓終端機的 SQL 日誌更易讀）
+  highlighter: new SqlHighlighter(),
 
   // 擴充功能
   extensions: [Migrator],
