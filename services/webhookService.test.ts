@@ -6,6 +6,7 @@ import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
 import { MikroORM, EntityManager } from "@mikro-orm/postgresql";
 import config from "../mikro-orm.config";
 import { Webhook } from "../db/entities/Webhook";
+import { MessageLog } from "../db/entities/MessageLog";
 import {
   createWebhook,
   getWebhookById,
@@ -32,7 +33,9 @@ describe("webhookService", () => {
   // 每個測試前清空資料並取得新的 EntityManager
   beforeEach(async () => {
     em = orm.em.fork();
-    // 清空 webhook 資料表
+    // 先清空 message_log 資料表（因為有外鍵約束）
+    await em.nativeDelete(MessageLog, {});
+    // 再清空 webhook 資料表
     await em.nativeDelete(Webhook, {});
   });
 

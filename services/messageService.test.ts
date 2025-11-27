@@ -1,0 +1,310 @@
+/**
+ * Message Service 測試
+ * TDD: 先定義預期行為，再實作功能
+ */
+import {
+  describe,
+  it,
+  expect,
+  beforeAll,
+  afterAll,
+  beforeEach,
+  vi,
+} from "vitest";
+import { MikroORM, EntityManager } from "@mikro-orm/postgresql";
+import config from "../mikro-orm.config";
+import { Webhook } from "../db/entities/Webhook";
+import { MessageLog, MessageStatus } from "../db/entities/MessageLog";
+import {
+  sendMessage,
+  getMessageLogs,
+  createMessageLog,
+  type SendMessageParams,
+  type SendMessageResult,
+} from "./messageService";
+
+describe("messageService", () => {
+  let orm: MikroORM;
+  let em: EntityManager;
+  let testWebhook: Webhook;
+
+  // 測試前初始化資料庫連線
+  beforeAll(async () => {
+    orm = await MikroORM.init(config);
+    const generator = orm.getSchemaGenerator();
+    await generator.ensureDatabase();
+    await generator.updateSchema();
+  });
+
+  // 每個測試前清空資料並建立測試 Webhook
+  beforeEach(async () => {
+    em = orm.em.fork();
+    // 先清空 message_log（因為有外鍵約束）
+    await em.nativeDelete(MessageLog, {});
+    await em.nativeDelete(Webhook, {});
+
+    // 建立測試用 Webhook
+    testWebhook = new Webhook(
+      "測試 Webhook",
+      "https://discord.com/api/webhooks/test/test"
+    );
+    await em.persistAndFlush(testWebhook);
+  });
+
+  // 測試後關閉連線
+  afterAll(async () => {
+    await orm.close(true);
+  });
+
+  /* ============================================
+     createMessageLog 測試
+     ============================================ */
+  describe("createMessageLog", () => {
+    it("應該能建立成功狀態的訊息記錄", async () => {
+      const log = await createMessageLog(em, {
+        webhook: testWebhook,
+        content: "測試訊息",
+        status: MessageStatus.SUCCESS,
+        statusCode: 204,
+      });
+
+      expect(log).toBeDefined();
+      expect(log.id).toBeDefined();
+      expect(log.content).toBe("測試訊息");
+      expect(log.status).toBe(MessageStatus.SUCCESS);
+      expect(log.statusCode).toBe(204);
+      expect(log.errorMessage).toBeUndefined();
+    });
+
+    it("應該能建立失敗狀態的訊息記錄（含錯誤訊息）", async () => {
+      const log = await createMessageLog(em, {
+        webhook: testWebhook,
+        content: "失敗的訊息",
+        status: MessageStatus.FAILED,
+        statusCode: 400,
+        errorMessage: "Bad Request",
+      });
+
+      expect(log.status).toBe(MessageStatus.FAILED);
+      expect(log.statusCode).toBe(400);
+      expect(log.errorMessage).toBe("Bad Request");
+    });
+  });
+
+  /* ============================================
+     getMessageLogs 測試
+     ============================================ */
+  describe("getMessageLogs", () => {
+    it("沒有記錄時應該回傳空陣列", async () => {
+      const logs = await getMessageLogs(em, testWebhook.id);
+      expect(logs).toEqual([]);
+    });
+
+    it("應該回傳指定 Webhook 的訊息記錄", async () => {
+      // 建立多筆記錄
+      await createMessageLog(em, {
+        webhook: testWebhook,
+        content: "訊息 1",
+        status: MessageStatus.SUCCESS,
+        statusCode: 204,
+      });
+      await createMessageLog(em, {
+        webhook: testWebhook,
+        content: "訊息 2",
+        status: MessageStatus.SUCCESS,
+        statusCode: 204,
+      });
+
+      const logs = await getMessageLogs(em, testWebhook.id);
+      expect(logs).toHaveLength(2);
+    });
+
+    it("應該按照發送時間降序排列（最新的在前）", async () => {
+      await createMessageLog(em, {
+        webhook: testWebhook,
+        content: "較早的訊息",
+        status: MessageStatus.SUCCESS,
+        statusCode: 204,
+      });
+
+      // 稍等一下確保時間差異
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      await createMessageLog(em, {
+        webhook: testWebhook,
+        content: "較新的訊息",
+        status: MessageStatus.SUCCESS,
+        statusCode: 204,
+      });
+
+      const logs = await getMessageLogs(em, testWebhook.id);
+      expect(logs[0].content).toBe("較新的訊息");
+      expect(logs[1].content).toBe("較早的訊息");
+    });
+
+    it("應該限制回傳筆數（預設 10 筆）", async () => {
+      // 建立 15 筆記錄
+      for (let i = 0; i < 15; i++) {
+        await createMessageLog(em, {
+          webhook: testWebhook,
+          content: `訊息 ${i}`,
+          status: MessageStatus.SUCCESS,
+          statusCode: 204,
+        });
+      }
+
+      const logs = await getMessageLogs(em, testWebhook.id);
+      expect(logs).toHaveLength(10);
+    });
+
+    it("應該能自訂回傳筆數", async () => {
+      for (let i = 0; i < 10; i++) {
+        await createMessageLog(em, {
+          webhook: testWebhook,
+          content: `訊息 ${i}`,
+          status: MessageStatus.SUCCESS,
+          statusCode: 204,
+        });
+      }
+
+      const logs = await getMessageLogs(em, testWebhook.id, 5);
+      expect(logs).toHaveLength(5);
+    });
+  });
+
+  /* ============================================
+     sendMessage 測試
+     ============================================ */
+  describe("sendMessage", () => {
+    beforeEach(() => {
+      // 重置所有 mock
+      vi.restoreAllMocks();
+    });
+
+    it("成功發送時應該回傳 success 狀態並記錄到資料庫", async () => {
+      // Mock fetch 成功回應
+      vi.spyOn(global, "fetch").mockResolvedValueOnce(
+        new Response(null, { status: 204 })
+      );
+
+      const params: SendMessageParams = {
+        webhookId: testWebhook.id,
+        content: "測試成功發送",
+      };
+
+      const result = await sendMessage(em, params);
+
+      expect(result.success).toBe(true);
+      expect(result.statusCode).toBe(204);
+      expect(result.messageLog).toBeDefined();
+      expect(result.messageLog?.status).toBe(MessageStatus.SUCCESS);
+
+      // 確認已記錄到資料庫
+      const logs = await getMessageLogs(em, testWebhook.id);
+      expect(logs).toHaveLength(1);
+      expect(logs[0].content).toBe("測試成功發送");
+    });
+
+    it("發送失敗時應該回傳 failed 狀態並記錄錯誤", async () => {
+      // Mock fetch 失敗回應
+      vi.spyOn(global, "fetch").mockResolvedValueOnce(
+        new Response(JSON.stringify({ message: "Invalid Webhook" }), {
+          status: 400,
+        })
+      );
+
+      const params: SendMessageParams = {
+        webhookId: testWebhook.id,
+        content: "測試失敗發送",
+      };
+
+      const result = await sendMessage(em, params);
+
+      expect(result.success).toBe(false);
+      expect(result.statusCode).toBe(400);
+      expect(result.error).toBeDefined();
+      expect(result.messageLog?.status).toBe(MessageStatus.FAILED);
+      expect(result.messageLog?.errorMessage).toBeDefined();
+    });
+
+    it("Webhook 不存在時應該回傳錯誤", async () => {
+      const params: SendMessageParams = {
+        webhookId: "non-existent-id",
+        content: "測試訊息",
+      };
+
+      const result = await sendMessage(em, params);
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe("Webhook 不存在");
+    });
+
+    it("Webhook 停用時應該回傳錯誤", async () => {
+      // 將 Webhook 設為停用
+      testWebhook.isActive = false;
+      await em.persistAndFlush(testWebhook);
+
+      const params: SendMessageParams = {
+        webhookId: testWebhook.id,
+        content: "測試訊息",
+      };
+
+      const result = await sendMessage(em, params);
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe("Webhook 已停用");
+    });
+
+    it("網路錯誤時應該記錄失敗", async () => {
+      // Mock fetch 拋出錯誤
+      vi.spyOn(global, "fetch").mockRejectedValueOnce(
+        new Error("Network error")
+      );
+
+      const params: SendMessageParams = {
+        webhookId: testWebhook.id,
+        content: "測試網路錯誤",
+      };
+
+      const result = await sendMessage(em, params);
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("Network error");
+      expect(result.messageLog?.status).toBe(MessageStatus.FAILED);
+    });
+
+    it("成功發送後應該更新 Webhook 的 successCount 和 lastUsed", async () => {
+      vi.spyOn(global, "fetch").mockResolvedValueOnce(
+        new Response(null, { status: 204 })
+      );
+
+      const params: SendMessageParams = {
+        webhookId: testWebhook.id,
+        content: "測試更新計數",
+      };
+
+      await sendMessage(em, params);
+
+      // 重新取得 Webhook 確認更新
+      const updatedWebhook = await em.findOne(Webhook, { id: testWebhook.id });
+      expect(updatedWebhook?.successCount).toBe(1);
+      expect(updatedWebhook?.lastUsed).toBeDefined();
+    });
+
+    it("發送失敗後應該更新 Webhook 的 failCount", async () => {
+      vi.spyOn(global, "fetch").mockResolvedValueOnce(
+        new Response(JSON.stringify({ message: "Error" }), { status: 400 })
+      );
+
+      const params: SendMessageParams = {
+        webhookId: testWebhook.id,
+        content: "測試更新失敗計數",
+      };
+
+      await sendMessage(em, params);
+
+      const updatedWebhook = await em.findOne(Webhook, { id: testWebhook.id });
+      expect(updatedWebhook?.failCount).toBe(1);
+    });
+  });
+});

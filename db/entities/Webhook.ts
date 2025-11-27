@@ -1,5 +1,12 @@
-import { Entity, PrimaryKey, Property } from "@mikro-orm/core";
+import {
+  Entity,
+  PrimaryKey,
+  Property,
+  OneToMany,
+  Collection,
+} from "@mikro-orm/core";
 import { randomUUID } from "crypto";
+import type { MessageLog } from "./MessageLog";
 
 /**
  * Webhook Entity
@@ -44,6 +51,13 @@ export class Webhook {
 
   @Property({ type: "datetime", onUpdate: () => new Date() })
   updatedAt: Date = new Date();
+
+  /**
+   * 訊息記錄列表
+   * 使用 OneToMany 建立一對多關係
+   */
+  @OneToMany("MessageLog", "webhook")
+  messageLogs = new Collection<MessageLog>(this);
 
   /**
    * 建構子

@@ -2,6 +2,7 @@ import { defineConfig } from "@mikro-orm/postgresql";
 import { Migrator } from "@mikro-orm/migrations";
 import * as dotenv from "dotenv";
 import { Webhook } from "./db/entities/Webhook";
+import { MessageLog } from "./db/entities/MessageLog";
 
 // 載入環境變數
 dotenv.config({ path: ".env.local" });
@@ -19,7 +20,7 @@ export default defineConfig({
   dbName: process.env.DATABASE_NAME || "db_discord_webhook_manager",
 
   // Entity 類別（直接引入，避免 glob 路徑問題）
-  entities: [Webhook],
+  entities: [Webhook, MessageLog],
 
   // 開發模式設定
   debug: process.env.NODE_ENV !== "production",
