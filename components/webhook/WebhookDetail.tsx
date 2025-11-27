@@ -264,7 +264,6 @@ export function WebhookDetail({
           <Card className="border-border bg-card">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base">
-                <Send className="h-4 w-4" />
                 發送訊息
               </CardTitle>
             </CardHeader>
@@ -289,10 +288,7 @@ export function WebhookDetail({
                     發送中...
                   </>
                 ) : (
-                  <>
-                    <Send className="h-4 w-4" />
-                    發送訊息
-                  </>
+                  <>發送訊息</>
                 )}
               </Button>
               {!webhook.isActive && (

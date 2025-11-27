@@ -4,8 +4,12 @@ import * as dotenv from "dotenv";
 import { Webhook } from "./db/entities/Webhook";
 import { MessageLog } from "./db/entities/MessageLog";
 
-// 載入環境變數
-dotenv.config({ path: ".env.local" });
+// 根據環境載入對應的環境變數檔
+// 測試環境：vitest.setup.ts 會先載入 .env.test
+// 開發環境：若尚未載入則載入 .env.local
+if (!process.env.DATABASE_NAME) {
+  dotenv.config({ path: ".env.local" });
+}
 
 /**
  * MikroORM 配置檔
