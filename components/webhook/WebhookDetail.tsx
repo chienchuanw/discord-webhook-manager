@@ -116,7 +116,6 @@ export function WebhookDetail({
           <Card className="border-border bg-card">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base">
-                <ExternalLink className="h-4 w-4" />
                 Webhook 資訊
               </CardTitle>
             </CardHeader>
@@ -153,7 +152,6 @@ export function WebhookDetail({
               {/* 狀態開關 */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Power className="h-4 w-4 text-muted-foreground" />
                   <span className="text-sm">啟用狀態</span>
                 </div>
                 <Switch
@@ -172,13 +170,11 @@ export function WebhookDetail({
             <CardContent>
               <div className="grid grid-cols-2 gap-4">
                 <StatItem
-                  icon={<CheckCircle2 className="h-5 w-5 text-discord-green" />}
                   label="成功發送"
                   value={webhook.successCount}
                   color="text-discord-green"
                 />
                 <StatItem
-                  icon={<XCircle className="h-5 w-5 text-discord-red" />}
                   label="發送失敗"
                   value={webhook.failCount}
                   color="text-discord-red"
@@ -194,19 +190,16 @@ export function WebhookDetail({
 
 /* 統計項目子元件 */
 function StatItem({
-  icon,
   label,
   value,
   color,
 }: {
-  icon: React.ReactNode;
   label: string;
   value: number;
   color: string;
 }) {
   return (
     <div className="flex items-center gap-3 rounded-lg bg-muted/50 p-4">
-      {icon}
       <div>
         <p className="text-xs text-muted-foreground">{label}</p>
         <p className={`text-2xl font-bold ${color}`}>{value}</p>
