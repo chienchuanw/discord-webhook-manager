@@ -13,6 +13,18 @@ export enum MessageStatus {
 }
 
 /**
+ * 預約發送狀態列舉
+ * PENDING: 等待發送
+ * SENT: 已發送
+ * CANCELLED: 已取消
+ */
+export enum ScheduledStatus {
+  PENDING = "pending",
+  SENT = "sent",
+  CANCELLED = "cancelled",
+}
+
+/**
  * MessageLog Entity
  * 記錄每次透過 Webhook 發送的訊息
  *
@@ -71,6 +83,20 @@ export class MessageLog {
   sentAt: Date = new Date();
 
   /**
+   * 預約發送時間
+   * null 表示立即發送，有值表示預約發送
+   */
+  @Property({ type: "datetime", nullable: true })
+  scheduledAt?: Date;
+
+  /**
+   * 預約發送狀態
+   * 僅當 scheduledAt 有值時才會使用
+   */
+  @Enum({ items: () => ScheduledStatus, nullable: true })
+  scheduledStatus?: ScheduledStatus;
+
+  /**
    * 建構子
    * @param webhook 關聯的 Webhook
    * @param content 訊息內容
@@ -82,4 +108,3 @@ export class MessageLog {
     this.status = status;
   }
 }
-

@@ -183,6 +183,30 @@
           "nullable": false,
           "length": 6,
           "mappedType": "datetime"
+        },
+        "scheduled_at": {
+          "name": "scheduled_at",
+          "type": "timestamptz",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "length": 6,
+          "mappedType": "datetime"
+        },
+        "scheduled_status": {
+          "name": "scheduled_status",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "enumItems": [
+            "pending",
+            "sent",
+            "cancelled"
+          ],
+          "mappedType": "enum"
         }
       },
       "name": "message_log",

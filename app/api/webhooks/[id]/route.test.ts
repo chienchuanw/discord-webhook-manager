@@ -6,6 +6,7 @@ import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
 import { MikroORM } from "@mikro-orm/postgresql";
 import config from "../../../../mikro-orm.config";
 import { Webhook } from "../../../../db/entities/Webhook";
+import { MessageLog } from "../../../../db/entities/MessageLog";
 import { GET, PATCH, DELETE } from "./route";
 
 describe("/api/webhooks/[id]", () => {
@@ -18,9 +19,10 @@ describe("/api/webhooks/[id]", () => {
     global.__orm = orm;
   });
 
-  // 每個測試前建立測試資料
+  // 每個測試前建立測試資料（先刪除 MessageLog 再刪除 Webhook，避免外鍵約束錯誤）
   beforeEach(async () => {
     const em = orm.em.fork();
+    await em.nativeDelete(MessageLog, {});
     await em.nativeDelete(Webhook, {});
     const testWebhook = new Webhook("測試 Webhook", "https://test.url");
     await em.persistAndFlush(testWebhook);

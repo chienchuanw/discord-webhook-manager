@@ -10,6 +10,8 @@ import {
   CheckCircle2,
   XCircle,
   Loader2,
+  Clock,
+  Ban,
 } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,6 +26,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import type { WebhookItem } from "@/components/layout/WebhookSidebar";
+import { ScheduleDialog } from "@/components/webhook/ScheduleDialog";
 
 /* ============================================
    訊息記錄型別定義
@@ -35,6 +38,8 @@ interface MessageLogItem {
   statusCode?: number;
   errorMessage?: string;
   sentAt: string;
+  scheduledAt?: string;
+  scheduledStatus?: "pending" | "sent" | "cancelled";
 }
 
 /* ============================================
@@ -64,6 +69,7 @@ export function WebhookDetail({
   const [isSending, setIsSending] = React.useState(false);
   const [messageLogs, setMessageLogs] = React.useState<MessageLogItem[]>([]);
   const [isLoadingLogs, setIsLoadingLogs] = React.useState(false);
+  const [scheduleDialogOpen, setScheduleDialogOpen] = React.useState(false);
 
   // 載入訊息歷史記錄
   const fetchMessageLogs = React.useCallback(async () => {
@@ -146,6 +152,21 @@ export function WebhookDetail({
       hour: "2-digit",
       minute: "2-digit",
     });
+  };
+
+  // 取消預約訊息
+  const handleCancelSchedule = async (messageId: string) => {
+    try {
+      const response = await fetch(`/api/messages/${messageId}/cancel`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        fetchMessageLogs();
+      }
+    } catch (error) {
+      console.error("取消預約失敗:", error);
+    }
   };
 
   // 複製 Webhook URL 到剪貼簿
@@ -275,22 +296,39 @@ export function WebhookDetail({
                 className="min-h-[100px] resize-none"
                 disabled={!webhook.isActive || isSending}
               />
-              <Button
-                onClick={handleSendMessage}
-                disabled={
-                  !messageContent.trim() || !webhook.isActive || isSending
-                }
-                className="w-full gap-2 bg-discord-blurple text-white hover:bg-discord-blurple/80"
-              >
-                {isSending ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    發送中...
-                  </>
-                ) : (
-                  <>發送訊息</>
-                )}
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  onClick={handleSendMessage}
+                  disabled={
+                    !messageContent.trim() || !webhook.isActive || isSending
+                  }
+                  className="flex-1 gap-2 bg-discord-blurple text-white hover:bg-discord-blurple/80"
+                >
+                  {isSending ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      發送中...
+                    </>
+                  ) : (
+                    <>發送訊息</>
+                  )}
+                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="icon"
+                      onClick={() => setScheduleDialogOpen(true)}
+                      disabled={
+                        !messageContent.trim() || !webhook.isActive || isSending
+                      }
+                      className="shrink-0 bg-discord-blurple text-white hover:bg-discord-blurple/80"
+                    >
+                      <Clock className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>預約發送</TooltipContent>
+                </Tooltip>
+              </div>
               {!webhook.isActive && (
                 <p className="text-center text-sm text-muted-foreground">
                   Webhook 已停用，無法發送訊息
@@ -337,7 +375,11 @@ export function WebhookDetail({
                   >
                     {/* 狀態圖示 */}
                     <div className="mt-0.5 shrink-0">
-                      {log.status === "success" ? (
+                      {log.scheduledStatus === "pending" ? (
+                        <Clock className="h-5 w-5 text-yellow-500" />
+                      ) : log.scheduledStatus === "cancelled" ? (
+                        <Ban className="h-5 w-5 text-muted-foreground" />
+                      ) : log.status === "success" ? (
                         <CheckCircle2 className="h-5 w-5 text-discord-green" />
                       ) : (
                         <XCircle className="h-5 w-5 text-destructive" />
@@ -348,7 +390,36 @@ export function WebhookDetail({
                     <div className="min-w-0 flex-1">
                       <p className="break-words text-sm">{log.content}</p>
                       <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                        <span>{formatTime(log.sentAt)}</span>
+                        {/* 預約狀態標記 */}
+                        {log.scheduledStatus === "pending" &&
+                          log.scheduledAt && (
+                            <Badge
+                              variant="outline"
+                              className="border-yellow-500/50 bg-yellow-500/10 text-yellow-500"
+                            >
+                              預約 {formatTime(log.scheduledAt)}
+                            </Badge>
+                          )}
+                        {log.scheduledStatus === "sent" && (
+                          <Badge
+                            variant="outline"
+                            className="border-discord-green/50 bg-discord-green/10 text-discord-green"
+                          >
+                            預約已發送
+                          </Badge>
+                        )}
+                        {log.scheduledStatus === "cancelled" && (
+                          <Badge
+                            variant="outline"
+                            className="text-muted-foreground"
+                          >
+                            已取消
+                          </Badge>
+                        )}
+                        {/* 發送時間 */}
+                        {log.scheduledStatus !== "pending" && (
+                          <span>{formatTime(log.sentAt)}</span>
+                        )}
                         {log.statusCode && (
                           <Badge variant="outline" className="text-xs">
                             HTTP {log.statusCode}
@@ -362,23 +433,42 @@ export function WebhookDetail({
                       </div>
                     </div>
 
-                    {/* 重新發送按鈕（僅失敗時顯示） */}
-                    {log.status === "failed" && webhook.isActive && (
+                    {/* 取消預約按鈕（僅等待中的預約訊息顯示） */}
+                    {log.scheduledStatus === "pending" && (
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => handleResendMessage(log.content)}
-                            disabled={isSending}
-                            className="h-8 w-8 shrink-0"
+                            onClick={() => handleCancelSchedule(log.id)}
+                            className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
                           >
-                            <RefreshCw className="h-4 w-4" />
+                            <Ban className="h-4 w-4" />
                           </Button>
                         </TooltipTrigger>
-                        <TooltipContent>重新發送</TooltipContent>
+                        <TooltipContent>取消預約</TooltipContent>
                       </Tooltip>
                     )}
+
+                    {/* 重新發送按鈕（僅失敗時顯示） */}
+                    {log.status === "failed" &&
+                      log.scheduledStatus !== "pending" &&
+                      webhook.isActive && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleResendMessage(log.content)}
+                              disabled={isSending}
+                              className="h-8 w-8 shrink-0"
+                            >
+                              <RefreshCw className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>重新發送</TooltipContent>
+                        </Tooltip>
+                      )}
                   </div>
                 ))}
               </div>
@@ -386,6 +476,18 @@ export function WebhookDetail({
           </CardContent>
         </Card>
       </div>
+
+      {/* 預約發送對話框 */}
+      <ScheduleDialog
+        open={scheduleDialogOpen}
+        onOpenChange={setScheduleDialogOpen}
+        messageContent={messageContent}
+        webhookId={webhook.id}
+        onScheduled={() => {
+          setMessageContent("");
+          fetchMessageLogs();
+        }}
+      />
     </div>
   );
 }
