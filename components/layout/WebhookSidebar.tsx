@@ -1,7 +1,9 @@
 "use client";
 
 import * as React from "react";
-import { Search, Plus, Webhook, MoreVertical, Circle } from "lucide-react";
+import { Search, Plus, MoreVertical, Circle } from "lucide-react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faDiscord } from "@fortawesome/free-brands-svg-icons";
 
 import {
   Sidebar,
@@ -79,14 +81,14 @@ export function WebhookSidebar({
       <SidebarHeader className="border-b border-sidebar-border px-3 py-3">
         <div className="flex items-center justify-between">
           <h2 className="text-base font-semibold text-foreground">
-            Webhook 管理
+            Webhook Manager
           </h2>
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 text-discord-green hover:bg-discord-green/20 hover:text-discord-green"
+                className="h-8 w-8 text-white hover:bg-discord-green/20 hover:text-discord-green"
                 onClick={onAdd}
               >
                 <Plus className="h-5 w-5" />
@@ -166,7 +168,10 @@ function WebhookListItem({
       >
         {/* Webhook 圖示與狀態指示 */}
         <div className="relative">
-          <Webhook className="h-4 w-4 text-muted-foreground" />
+          <FontAwesomeIcon
+            icon={faDiscord}
+            className="h-4 w-4 text-muted-foreground"
+          />
           {/* 狀態指示燈 */}
           <Circle
             className={`absolute -bottom-0.5 -right-0.5 h-2 w-2 fill-current ${
@@ -178,9 +183,6 @@ function WebhookListItem({
         {/* Webhook 名稱與統計 */}
         <div className="flex flex-1 flex-col overflow-hidden">
           <span className="truncate text-sm font-medium">{webhook.name}</span>
-          <span className="text-xs text-muted-foreground">
-            成功 {webhook.successCount} / 失敗 {webhook.failCount}
-          </span>
         </div>
       </SidebarMenuButton>
 

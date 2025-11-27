@@ -1,6 +1,8 @@
 "use client";
 
-import { Webhook, Plus, Sparkles } from "lucide-react";
+import { Plus, Sparkles } from "lucide-react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faDiscord } from "@fortawesome/free-brands-svg-icons";
 import { Button } from "@/components/ui/button";
 
 /* ============================================
@@ -24,7 +26,10 @@ export function EmptyState({ onAddWebhook }: EmptyStateProps) {
 
           {/* 主圖示容器 */}
           <div className="relative flex h-24 w-24 items-center justify-center rounded-full bg-linear-to-br from-discord-blurple to-[#4752c4]">
-            <Webhook className="h-12 w-12 text-white" />
+            <FontAwesomeIcon
+              icon={faDiscord}
+              className="h-12 w-12 text-white"
+            />
           </div>
 
           {/* 裝飾星星 */}
@@ -33,7 +38,7 @@ export function EmptyState({ onAddWebhook }: EmptyStateProps) {
 
         {/* 歡迎標題 */}
         <h1 className="mb-3 text-2xl font-bold text-foreground">
-          歡迎使用 Webhook 管理器
+          歡迎使用 Webhook Manager
         </h1>
 
         {/* 說明文字 */}

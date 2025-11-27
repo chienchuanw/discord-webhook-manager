@@ -1,7 +1,8 @@
 "use client";
 
-import { Menu, Webhook } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Menu } from "lucide-react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faDiscord } from "@fortawesome/free-brands-svg-icons";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 
 /* ============================================
@@ -13,7 +14,7 @@ interface MobileHeaderProps {
   title?: string;
 }
 
-export function MobileHeader({ title = "Webhook 管理" }: MobileHeaderProps) {
+export function MobileHeader({ title = "Webhook Manger" }: MobileHeaderProps) {
   return (
     <header className="flex h-14 items-center gap-3 border-b border-border bg-card px-4 md:hidden">
       {/* 側邊欄觸發按鈕 */}
@@ -24,11 +25,10 @@ export function MobileHeader({ title = "Webhook 管理" }: MobileHeaderProps) {
       {/* Logo 與標題 */}
       <div className="flex items-center gap-2">
         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-discord-blurple">
-          <Webhook className="h-4 w-4 text-white" />
+          <FontAwesomeIcon icon={faDiscord} className="h-4 w-4 text-white" />
         </div>
         <span className="font-semibold text-foreground">{title}</span>
       </div>
     </header>
   );
 }
-
