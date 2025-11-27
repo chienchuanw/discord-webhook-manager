@@ -80,7 +80,7 @@ describe("GET /api/cron/send-scheduled", () => {
     const messageLog = em.create(MessageLog, {
       webhook,
       content: "已到期的預約訊息",
-      status: MessageStatus.SUCCESS,
+      status: MessageStatus.PENDING, // 預約訊息使用 PENDING 狀態
       sentAt: new Date(),
       scheduledAt: new Date(Date.now() - 60 * 1000), // 1 分鐘前
       scheduledStatus: ScheduledStatus.PENDING,
@@ -115,7 +115,7 @@ describe("GET /api/cron/send-scheduled", () => {
     const messageLog = em.create(MessageLog, {
       webhook,
       content: "會失敗的預約訊息",
-      status: MessageStatus.SUCCESS,
+      status: MessageStatus.PENDING, // 預約訊息使用 PENDING 狀態
       sentAt: new Date(),
       scheduledAt: new Date(Date.now() - 60 * 1000),
       scheduledStatus: ScheduledStatus.PENDING,
@@ -144,7 +144,7 @@ describe("GET /api/cron/send-scheduled", () => {
     const messageLog = em.create(MessageLog, {
       webhook,
       content: "未到期的預約訊息",
-      status: MessageStatus.SUCCESS,
+      status: MessageStatus.PENDING, // 預約訊息使用 PENDING 狀態
       sentAt: new Date(),
       scheduledAt: new Date(Date.now() + 60 * 60 * 1000), // 1 小時後
       scheduledStatus: ScheduledStatus.PENDING,

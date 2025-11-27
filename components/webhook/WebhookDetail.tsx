@@ -12,6 +12,7 @@ import {
   Loader2,
   Clock,
   Ban,
+  AlertTriangle,
 } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -34,12 +35,23 @@ import { ScheduleDialog } from "@/components/webhook/ScheduleDialog";
 interface MessageLogItem {
   id: string;
   content: string;
-  status: "success" | "failed";
+  status: "pending" | "success" | "failed";
   statusCode?: number;
   errorMessage?: string;
   sentAt: string;
   scheduledAt?: string;
   scheduledStatus?: "pending" | "sent" | "cancelled";
+}
+
+/**
+ * 判斷預約訊息是否已過期
+ * 過期條件：scheduledStatus 為 pending 且 scheduledAt 已過去
+ */
+function isScheduledExpired(log: MessageLogItem): boolean {
+  if (log.scheduledStatus !== "pending" || !log.scheduledAt) {
+    return false;
+  }
+  return new Date(log.scheduledAt) < new Date();
 }
 
 /* ============================================
@@ -373,9 +385,12 @@ export function WebhookDetail({
                     key={log.id}
                     className="flex items-start gap-3 rounded-lg border border-border bg-input/50 p-3"
                   >
-                    {/* 狀態圖示 */}
+                    {/* 狀態圖示 - 根據訊息狀態顯示不同圖示 */}
                     <div className="mt-0.5 shrink-0">
-                      {log.scheduledStatus === "pending" ? (
+                      {/* 過期的預約訊息顯示警告圖示 */}
+                      {isScheduledExpired(log) ? (
+                        <AlertTriangle className="h-5 w-5 text-orange-500" />
+                      ) : log.scheduledStatus === "pending" ? (
                         <Clock className="h-5 w-5 text-yellow-500" />
                       ) : log.scheduledStatus === "cancelled" ? (
                         <Ban className="h-5 w-5 text-muted-foreground" />
@@ -391,7 +406,18 @@ export function WebhookDetail({
                       <p className="break-words text-sm">{log.content}</p>
                       <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                         {/* 預約狀態標記 */}
+                        {/* 過期的預約訊息 */}
+                        {isScheduledExpired(log) && log.scheduledAt && (
+                          <Badge
+                            variant="outline"
+                            className="border-orange-500/50 bg-orange-500/10 text-orange-500"
+                          >
+                            已過期 {formatTime(log.scheduledAt)}
+                          </Badge>
+                        )}
+                        {/* 尚未過期的等待中預約訊息 */}
                         {log.scheduledStatus === "pending" &&
+                          !isScheduledExpired(log) &&
                           log.scheduledAt && (
                             <Badge
                               variant="outline"

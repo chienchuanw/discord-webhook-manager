@@ -79,11 +79,11 @@ export async function createScheduledMessage(
     return { success: false, error: "Webhook 已停用" };
   }
 
-  // 建立預約訊息記錄
-  const messageLog = new MessageLog(webhook, content, MessageStatus.SUCCESS);
+  // 建立預約訊息記錄（使用 PENDING 狀態表示尚未發送）
+  const messageLog = new MessageLog(webhook, content, MessageStatus.PENDING);
   messageLog.scheduledAt = scheduledAt;
   messageLog.scheduledStatus = ScheduledStatus.PENDING;
-  messageLog.sentAt = new Date(); // 建立時間
+  messageLog.sentAt = new Date(); // 建立時間（之後發送時會更新）
 
   await em.persistAndFlush(messageLog);
 

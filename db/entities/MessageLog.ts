@@ -4,10 +4,12 @@ import { Webhook } from "./Webhook";
 
 /**
  * 訊息發送狀態列舉
+ * PENDING: 等待發送（預約訊息尚未到期）
  * SUCCESS: 發送成功
  * FAILED: 發送失敗
  */
 export enum MessageStatus {
+  PENDING = "pending",
   SUCCESS = "success",
   FAILED = "failed",
 }

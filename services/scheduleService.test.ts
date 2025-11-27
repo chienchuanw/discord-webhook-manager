@@ -192,7 +192,7 @@ describe("scheduleService", () => {
       const messageLog = em.create(MessageLog, {
         webhook: testWebhook,
         content: "已到期的預約訊息",
-        status: MessageStatus.SUCCESS, // 先設定為 success，實際發送前會更新
+        status: MessageStatus.PENDING, // 預約訊息使用 PENDING 狀態
         scheduledAt: pastScheduledTime,
         scheduledStatus: ScheduledStatus.PENDING,
         sentAt: new Date(),
@@ -211,7 +211,7 @@ describe("scheduleService", () => {
       const messageLog = em.create(MessageLog, {
         webhook: testWebhook,
         content: "未到期的預約訊息",
-        status: MessageStatus.SUCCESS,
+        status: MessageStatus.PENDING, // 預約訊息使用 PENDING 狀態
         scheduledAt: futureTime,
         scheduledStatus: ScheduledStatus.PENDING,
         sentAt: new Date(),
@@ -228,7 +228,7 @@ describe("scheduleService", () => {
       const messageLog = em.create(MessageLog, {
         webhook: testWebhook,
         content: "已取消的預約訊息",
-        status: MessageStatus.SUCCESS,
+        status: MessageStatus.PENDING, // 預約訊息使用 PENDING 狀態
         scheduledAt: pastTime,
         scheduledStatus: ScheduledStatus.CANCELLED,
         sentAt: new Date(),
@@ -260,7 +260,7 @@ describe("scheduleService", () => {
       const messageLog = em.create(MessageLog, {
         webhook: testWebhook,
         content: "待發送的預約訊息",
-        status: MessageStatus.SUCCESS,
+        status: MessageStatus.PENDING, // 預約訊息使用 PENDING 狀態
         scheduledAt: pastTime,
         scheduledStatus: ScheduledStatus.PENDING,
         sentAt: new Date(),
@@ -289,7 +289,7 @@ describe("scheduleService", () => {
       const messageLog = em.create(MessageLog, {
         webhook: testWebhook,
         content: "會失敗的預約訊息",
-        status: MessageStatus.SUCCESS,
+        status: MessageStatus.PENDING, // 預約訊息使用 PENDING 狀態
         scheduledAt: pastTime,
         scheduledStatus: ScheduledStatus.PENDING,
         sentAt: new Date(),
@@ -317,7 +317,7 @@ describe("scheduleService", () => {
       const messageLog = em.create(MessageLog, {
         webhook: testWebhook,
         content: "Webhook 已停用的預約訊息",
-        status: MessageStatus.SUCCESS,
+        status: MessageStatus.PENDING, // 預約訊息使用 PENDING 狀態
         scheduledAt: pastTime,
         scheduledStatus: ScheduledStatus.PENDING,
         sentAt: new Date(),
