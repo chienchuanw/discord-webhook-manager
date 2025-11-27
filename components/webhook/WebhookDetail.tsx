@@ -79,32 +79,29 @@ export function WebhookDetail({
           </Badge>
         </div>
 
-        {/* 操作按鈕 - 行動裝置時換行顯示 */}
+        {/* 操作按鈕 - Discord 實心背景風格 */}
         <div className="flex flex-wrap items-center gap-2">
           <Button
-            variant="outline"
             size="sm"
             onClick={onTestSend}
-            className="flex-1 gap-2 border-discord-blurple text-discord-blurple hover:bg-discord-blurple/10 sm:flex-none"
+            className="flex-1 gap-2 bg-discord-blurple text-white hover:bg-discord-blurple/80 sm:flex-none"
           >
             <Send className="h-4 w-4" />
             <span className="hidden xs:inline">測試發送</span>
             <span className="xs:hidden">測試</span>
           </Button>
           <Button
-            variant="outline"
             size="sm"
             onClick={onEdit}
-            className="flex-1 gap-2 sm:flex-none"
+            className="flex-1 gap-2 bg-[#4e5058] text-white hover:bg-[#6d6f78] sm:flex-none"
           >
             <Settings className="h-4 w-4" />
             <span className="hidden xs:inline">編輯</span>
           </Button>
           <Button
-            variant="outline"
             size="sm"
             onClick={onDelete}
-            className="flex-1 gap-2 border-destructive text-destructive hover:bg-destructive/10 sm:flex-none"
+            className="flex-1 gap-2 bg-destructive text-white hover:bg-destructive/80 sm:flex-none"
           >
             <Trash2 className="h-4 w-4" />
             <span className="hidden xs:inline">刪除</span>

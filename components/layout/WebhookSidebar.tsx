@@ -115,7 +115,8 @@ export function WebhookSidebar({
             Webhooks ({filteredWebhooks.length})
           </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
+            {/* 使用 space-y-2 增加項目之間的間距 */}
+            <SidebarMenu className="space-y-2">
               {filteredWebhooks.map((webhook) => (
                 <WebhookListItem
                   key={webhook.id}
@@ -210,4 +211,3 @@ function WebhookListItem({
     </SidebarMenuItem>
   );
 }
-
