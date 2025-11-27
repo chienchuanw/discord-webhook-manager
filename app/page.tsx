@@ -15,6 +15,7 @@ import {
   type WebhookFormData,
 } from "@/components/webhook/WebhookFormDialog";
 import { DeleteConfirmDialog } from "@/components/webhook/DeleteConfirmDialog";
+import { toast } from "sonner";
 
 /* ============================================
    Webhook 完整資料型別（包含 API 回傳的所有欄位）
@@ -115,13 +116,19 @@ export default function Home() {
       if (result.success) {
         // 重新載入 webhooks 以更新統計資料
         await fetchWebhooks();
-        alert("✅ 測試訊息發送成功！");
+        toast.success("測試訊息發送成功！", {
+          description: "Webhook 已成功發送測試訊息到 Discord",
+        });
       } else {
-        alert(`❌ 發送失敗：${result.error || "未知錯誤"}`);
+        toast.error("發送失敗", {
+          description: result.error || "未知錯誤",
+        });
       }
     } catch (error) {
       console.error("測試發送失敗:", error);
-      alert("❌ 發送失敗：網路錯誤");
+      toast.error("發送失敗", {
+        description: "網路錯誤，請檢查網路連線後再試",
+      });
     }
   };
 
