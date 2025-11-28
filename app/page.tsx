@@ -1,12 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
-import {
-  WebhookSidebar,
-  type WebhookItem,
-} from "@/components/layout/WebhookSidebar";
-import { MobileHeader } from "@/components/layout/MobileHeader";
+import { DashboardProvider, useDashboard } from "@/contexts/DashboardContext";
+import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { WebhookDetail } from "@/components/webhook/WebhookDetail";
 import { EmptyState } from "@/components/webhook/EmptyState";
 import { NoSelectionState } from "@/components/webhook/NoSelectionState";
@@ -15,35 +11,45 @@ import {
   type WebhookFormData,
 } from "@/components/webhook/WebhookFormDialog";
 import { DeleteConfirmDialog } from "@/components/webhook/DeleteConfirmDialog";
-import { toast } from "sonner";
-
-/* ============================================
-   Webhook 完整資料型別（包含 API 回傳的所有欄位）
-   ============================================ */
-interface WebhookData extends WebhookItem {
-  url: string;
-  createdAt: string;
-  updatedAt: string;
-}
 
 /* ============================================
    首頁元件
-   整合側邊欄與主內容區的佈局
+   顯示 Webhook 詳細資訊的主要內容區
    ============================================ */
 export default function Home() {
-  // Webhook 列表狀態
-  const [webhooks, setWebhooks] = React.useState<WebhookData[]>([]);
-  const [selectedId, setSelectedId] = React.useState<string | undefined>();
-  const [isLoading, setIsLoading] = React.useState(true);
+  return (
+    <DashboardProvider>
+      <DashboardLayout>
+        <HomeContent />
+      </DashboardLayout>
+    </DashboardProvider>
+  );
+}
+
+/* ============================================
+   HomeContent 元件
+   首頁的實際內容，使用 DashboardContext
+   ============================================ */
+function HomeContent() {
+  const {
+    webhooks,
+    setWebhooks,
+    selectedId,
+    setSelectedId,
+    handleTestSend,
+    handleToggleActive,
+    openAddDialog,
+    registerDialogHandlers,
+  } = useDashboard();
 
   // 對話框狀態
   const [isFormOpen, setIsFormOpen] = React.useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = React.useState(false);
   const [editingWebhook, setEditingWebhook] = React.useState<
-    WebhookData | undefined
+    (typeof webhooks)[0] | undefined
   >();
   const [deletingWebhook, setDeletingWebhook] = React.useState<
-    WebhookData | undefined
+    (typeof webhooks)[0] | undefined
   >();
 
   // 找到目前選中的 Webhook
@@ -52,111 +58,33 @@ export default function Home() {
     [webhooks, selectedId]
   );
 
-  /* ============================================
-     API 呼叫函式
-     ============================================ */
-
-  // 載入所有 Webhooks
-  const fetchWebhooks = React.useCallback(async () => {
-    try {
-      const response = await fetch("/api/webhooks");
-      if (response.ok) {
-        const data = await response.json();
-        setWebhooks(data);
-      }
-    } catch (error) {
-      console.error("載入 Webhooks 失敗:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  // 初始載入
+  // 註冊對話框處理函式給 Context 使用
   React.useEffect(() => {
-    fetchWebhooks();
-  }, [fetchWebhooks]);
-
-  /* ============================================
-     事件處理函式
-     ============================================ */
-
-  // 開啟新增對話框
-  const handleAddWebhook = () => {
-    setEditingWebhook(undefined);
-    setIsFormOpen(true);
-  };
-
-  // 開啟編輯對話框
-  const handleEditWebhook = (id: string) => {
-    const webhook = webhooks.find((w) => w.id === id);
-    if (webhook) {
-      setEditingWebhook(webhook);
-      setIsFormOpen(true);
-    }
-  };
-
-  // 開啟刪除確認對話框
-  const handleDeleteWebhook = (id: string) => {
-    const webhook = webhooks.find((w) => w.id === id);
-    if (webhook) {
-      setDeletingWebhook(webhook);
-      setIsDeleteOpen(true);
-    }
-  };
-
-  // 測試發送
-  const handleTestSend = async (id: string) => {
-    try {
-      const response = await fetch(`/api/webhooks/${id}/test`, {
-        method: "POST",
-      });
-
-      const result = await response.json();
-
-      if (result.success) {
-        // 重新載入 webhooks 以更新統計資料
-        await fetchWebhooks();
-        toast.success("測試訊息發送成功！", {
-          description: "Webhook 已成功發送測試訊息到 Discord",
-        });
-      } else {
-        toast.error("發送失敗", {
-          description: result.error || "未知錯誤",
-        });
-      }
-    } catch (error) {
-      console.error("測試發送失敗:", error);
-      toast.error("發送失敗", {
-        description: "網路錯誤，請檢查網路連線後再試",
-      });
-    }
-  };
-
-  // 切換啟用狀態
-  const handleToggleActive = async (isActive: boolean) => {
-    if (!selectedId) return;
-
-    try {
-      const response = await fetch(`/api/webhooks/${selectedId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ isActive }),
-      });
-
-      if (response.ok) {
-        setWebhooks((prev) =>
-          prev.map((w) => (w.id === selectedId ? { ...w, isActive } : w))
-        );
-      }
-    } catch (error) {
-      console.error("更新狀態失敗:", error);
-    }
-  };
+    registerDialogHandlers({
+      onAdd: () => {
+        setEditingWebhook(undefined);
+        setIsFormOpen(true);
+      },
+      onEdit: (id: string) => {
+        const webhook = webhooks.find((w) => w.id === id);
+        if (webhook) {
+          setEditingWebhook(webhook);
+          setIsFormOpen(true);
+        }
+      },
+      onDelete: (id: string) => {
+        const webhook = webhooks.find((w) => w.id === id);
+        if (webhook) {
+          setDeletingWebhook(webhook);
+          setIsDeleteOpen(true);
+        }
+      },
+    });
+  }, [registerDialogHandlers, webhooks]);
 
   // 提交表單（新增或編輯）
   const handleFormSubmit = async (data: WebhookFormData) => {
     if (editingWebhook) {
-      // 編輯模式
       const response = await fetch(`/api/webhooks/${editingWebhook.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -170,7 +98,6 @@ export default function Home() {
         );
       }
     } else {
-      // 新增模式
       const response = await fetch("/api/webhooks", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -201,58 +128,33 @@ export default function Home() {
     }
   };
 
-  // 判斷是否為空狀態（沒有任何 Webhook）
+  // 判斷是否為空狀態
   const isEmpty = webhooks.length === 0;
 
-  // 載入中狀態
-  if (isLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-[#313338]">
-        <div className="text-[#b5bac1]">載入中...</div>
-      </div>
-    );
-  }
-
   return (
-    <SidebarProvider>
-      {/* 側邊欄 - 當有 Webhook 時顯示 */}
-      {!isEmpty && (
-        <WebhookSidebar
-          webhooks={webhooks}
-          selectedId={selectedId}
-          onSelect={setSelectedId}
-          onAdd={handleAddWebhook}
-          onEdit={handleEditWebhook}
-          onDelete={handleDeleteWebhook}
-          onTestSend={handleTestSend}
+    <>
+      {/* 主要內容區 */}
+      {isEmpty ? (
+        <EmptyState onAddWebhook={openAddDialog} />
+      ) : selectedWebhook ? (
+        <WebhookDetail
+          webhook={selectedWebhook}
+          onEdit={() => {
+            setEditingWebhook(selectedWebhook);
+            setIsFormOpen(true);
+          }}
+          onDelete={() => {
+            setDeletingWebhook(selectedWebhook);
+            setIsDeleteOpen(true);
+          }}
+          onTestSend={() => handleTestSend(selectedWebhook.id)}
+          onToggleActive={(isActive) =>
+            handleToggleActive(selectedWebhook.id, isActive)
+          }
         />
+      ) : (
+        <NoSelectionState />
       )}
-
-      {/* 主內容區 - 固定視口高度，防止整頁滾動 */}
-      <SidebarInset className="flex h-screen flex-col overflow-hidden">
-        {/* 行動裝置專用頂部導覽列 */}
-        {!isEmpty && <MobileHeader />}
-
-        {/* 主要內容 - min-h-0 確保 flex 子元素可正確收縮 */}
-        <div className="min-h-0 flex-1">
-          {isEmpty ? (
-            // 空狀態：歡迎頁面
-            <EmptyState onAddWebhook={handleAddWebhook} />
-          ) : selectedWebhook ? (
-            // 有選中的 Webhook：顯示詳細資訊
-            <WebhookDetail
-              webhook={selectedWebhook}
-              onEdit={() => handleEditWebhook(selectedWebhook.id)}
-              onDelete={() => handleDeleteWebhook(selectedWebhook.id)}
-              onTestSend={() => handleTestSend(selectedWebhook.id)}
-              onToggleActive={handleToggleActive}
-            />
-          ) : (
-            // 尚未選擇：提示選擇 Webhook
-            <NoSelectionState />
-          )}
-        </div>
-      </SidebarInset>
 
       {/* 新增/編輯對話框 */}
       <WebhookFormDialog
@@ -283,6 +185,6 @@ export default function Home() {
         onConfirm={handleConfirmDelete}
         webhookName={deletingWebhook?.name ?? ""}
       />
-    </SidebarProvider>
+    </>
   );
 }

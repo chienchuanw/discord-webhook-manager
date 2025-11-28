@@ -25,6 +25,9 @@ export interface UpdateWebhookParams {
   name?: string;
   url?: string;
   isActive?: boolean;
+  successCount?: number;
+  failCount?: number;
+  lastUsed?: Date;
 }
 
 /* ============================================
@@ -106,6 +109,15 @@ export async function updateWebhook(
   if (params.isActive !== undefined) {
     webhook.isActive = params.isActive;
   }
+  if (params.successCount !== undefined) {
+    webhook.successCount = params.successCount;
+  }
+  if (params.failCount !== undefined) {
+    webhook.failCount = params.failCount;
+  }
+  if (params.lastUsed !== undefined) {
+    webhook.lastUsed = params.lastUsed;
+  }
 
   await em.flush();
   return webhook;
@@ -129,4 +141,3 @@ export async function deleteWebhook(
   await em.removeAndFlush(webhook);
   return true;
 }
-

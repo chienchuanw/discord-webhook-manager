@@ -23,12 +23,6 @@ export default defineConfig({
     exclude: ["node_modules", ".next"],
     // 設定檔案執行前的 setup
     setupFiles: ["./vitest.setup.ts"],
-    // 針對不同測試檔案使用不同環境
-    environmentMatchGlobs: [
-      // 元件測試使用 jsdom
-      ["**/*.test.tsx", "jsdom"],
-      ["components/**/*.test.ts", "jsdom"],
-    ],
     // 序列執行測試（避免資料庫競爭）
     fileParallelism: false,
     // 覆蓋率設定
