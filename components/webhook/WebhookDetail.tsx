@@ -54,6 +54,41 @@ function isScheduledExpired(log: MessageLogItem): boolean {
   return new Date(log.scheduledAt) < new Date();
 }
 
+/**
+ * 根據訊息記錄的狀態回傳對應的圖示元件
+ * 優先順序：過期 > 預約狀態 > 一般狀態
+ */
+function getStatusIcon(log: MessageLogItem): React.ReactNode {
+  // 過期的預約訊息
+  if (isScheduledExpired(log)) {
+    return <AlertTriangle className="h-5 w-5 text-orange-500" />;
+  }
+
+  // 預約訊息狀態
+  switch (log.scheduledStatus) {
+    case "pending":
+      return <Clock className="h-5 w-5 text-yellow-500" />;
+    case "cancelled":
+      return <Ban className="h-5 w-5 text-muted-foreground" />;
+    case "sent":
+      return log.status === "failed" ? (
+        <XCircle className="h-5 w-5 text-destructive" />
+      ) : (
+        <CheckCircle2 className="h-5 w-5 text-discord-green" />
+      );
+  }
+
+  // 一般訊息狀態
+  switch (log.status) {
+    case "success":
+      return <CheckCircle2 className="h-5 w-5 text-discord-green" />;
+    case "failed":
+      return <XCircle className="h-5 w-5 text-destructive" />;
+    default:
+      return <Clock className="h-5 w-5 text-muted-foreground" />;
+  }
+}
+
 /* ============================================
    WebhookDetail 元件
    顯示選中的 Webhook 詳細資訊
@@ -385,25 +420,12 @@ export function WebhookDetail({
                     key={log.id}
                     className="flex items-start gap-3 rounded-lg border border-border bg-input/50 p-3"
                   >
-                    {/* 狀態圖示 - 根據訊息狀態顯示不同圖示 */}
-                    <div className="mt-0.5 shrink-0">
-                      {/* 過期的預約訊息顯示警告圖示 */}
-                      {isScheduledExpired(log) ? (
-                        <AlertTriangle className="h-5 w-5 text-orange-500" />
-                      ) : log.scheduledStatus === "pending" ? (
-                        <Clock className="h-5 w-5 text-yellow-500" />
-                      ) : log.scheduledStatus === "cancelled" ? (
-                        <Ban className="h-5 w-5 text-muted-foreground" />
-                      ) : log.status === "success" ? (
-                        <CheckCircle2 className="h-5 w-5 text-discord-green" />
-                      ) : (
-                        <XCircle className="h-5 w-5 text-destructive" />
-                      )}
-                    </div>
+                    {/* 狀態圖示 */}
+                    <div className="mt-0.5 shrink-0">{getStatusIcon(log)}</div>
 
                     {/* 訊息內容 */}
                     <div className="min-w-0 flex-1">
-                      <p className="break-words text-sm">{log.content}</p>
+                      <p className="wrap-break-word text-sm">{log.content}</p>
                       <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                         {/* 預約狀態標記 */}
                         {/* 過期的預約訊息 */}

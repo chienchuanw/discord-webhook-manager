@@ -36,7 +36,7 @@ export async function GET(request: Request, context: RouteContext) {
     // 取得訊息記錄（預設 10 筆）
     const logs = await getMessageLogs(em, id, 10);
 
-    // 格式化回傳資料
+    // 格式化回傳資料（包含預約發送相關欄位）
     const messages = logs.map((log) => ({
       id: log.id,
       content: log.content,
@@ -44,15 +44,13 @@ export async function GET(request: Request, context: RouteContext) {
       statusCode: log.statusCode,
       errorMessage: log.errorMessage,
       sentAt: log.sentAt,
+      scheduledAt: log.scheduledAt,
+      scheduledStatus: log.scheduledStatus,
     }));
 
     return NextResponse.json({ messages }, { status: 200 });
   } catch (error) {
     console.error("取得訊息歷史失敗:", error);
-    return NextResponse.json(
-      { error: "取得訊息歷史失敗" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "取得訊息歷史失敗" }, { status: 500 });
   }
 }
-
