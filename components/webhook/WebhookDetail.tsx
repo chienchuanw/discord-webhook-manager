@@ -360,16 +360,31 @@ export function WebhookDetail({
 
   // 訊息列表的 ref，用於自動滾動到底部
   const messagesEndRef = React.useRef<HTMLDivElement>(null);
+  // 追蹤是否為初次載入，初次載入時不使用動畫直接跳到底部
+  const isInitialLoad = React.useRef(true);
 
   // 滾動到訊息列表底部
-  const scrollToBottom = React.useCallback(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  const scrollToBottom = React.useCallback((smooth = true) => {
+    messagesEndRef.current?.scrollIntoView({
+      behavior: smooth ? "smooth" : "instant",
+    });
   }, []);
 
-  // 當訊息列表更新時自動滾動到底部
+  // 當訊息列表首次載入完成時，直接跳到底部（不使用動畫）
   React.useEffect(() => {
-    scrollToBottom();
-  }, [messageLogs, scrollToBottom]);
+    if (messageLogs.length > 0 && isInitialLoad.current && !isLoadingLogs) {
+      // 使用 requestAnimationFrame 確保 DOM 已更新
+      requestAnimationFrame(() => {
+        scrollToBottom(false); // 初次載入不使用動畫
+        isInitialLoad.current = false;
+      });
+    }
+  }, [messageLogs, isLoadingLogs, scrollToBottom]);
+
+  // 當 webhook 改變時，重置初次載入狀態
+  React.useEffect(() => {
+    isInitialLoad.current = true;
+  }, [webhook.id]);
 
   return (
     <div className="flex h-full flex-col">
@@ -788,9 +803,19 @@ export function WebhookDetail({
         onOpenChange={setScheduleDialogOpen}
         messageContent={messageContent}
         webhookId={webhook.id}
-        onScheduled={() => {
+        onScheduled={(messageLog) => {
+          // 使用樂觀更新方式：直接將新訊息加入列表，避免重新載入造成跳動
+          const newMessage: MessageLogItem = {
+            id: messageLog.id,
+            content: messageLog.content,
+            status: messageLog.status as MessageLogItem["status"],
+            sentAt: messageLog.sentAt,
+            scheduledAt: messageLog.scheduledAt,
+            scheduledStatus:
+              messageLog.scheduledStatus as MessageLogItem["scheduledStatus"],
+          };
+          setMessageLogs((prev) => [...prev, newMessage]);
           setMessageContent("");
-          fetchMessageLogs();
         }}
       />
     </div>

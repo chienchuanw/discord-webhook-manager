@@ -33,12 +33,25 @@ import { cn } from "@/lib/utils";
    ScheduleDialog 元件
    預約發送訊息的對話框
    ============================================ */
+/**
+ * 預約訊息的資料結構（API 回傳）
+ */
+export interface ScheduledMessageData {
+  id: string;
+  content: string;
+  status: string;
+  sentAt: string;
+  scheduledAt: string;
+  scheduledStatus: string;
+}
+
 interface ScheduleDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   messageContent: string;
   webhookId: string;
-  onScheduled: () => void;
+  /** 預約成功時的回調，傳入新建立的訊息資料 */
+  onScheduled: (messageLog: ScheduledMessageData) => void;
 }
 
 // 快捷選項定義
@@ -123,7 +136,8 @@ export function ScheduleDialog({
       const data = await response.json();
 
       if (response.ok) {
-        onScheduled();
+        // 傳入 API 回傳的訊息資料
+        onScheduled(data.messageLog);
         onOpenChange(false);
       } else {
         setError(data.error || "預約失敗");
