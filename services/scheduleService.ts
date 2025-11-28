@@ -138,6 +138,11 @@ export async function cancelScheduledMessage(
  * 取得到期的待發送預約訊息
  * @param em EntityManager 實例
  * @returns 待發送的訊息記錄陣列
+ *
+ * 排序邏輯：
+ * 1. 先按預約時間 (scheduledAt) 升序排列
+ * 2. 相同預約時間時，按建立時間 (sentAt，此時為建立時間) 升序排列
+ *    確保先預約的訊息先發送
  */
 export async function getPendingScheduledMessages(
   em: EntityManager
@@ -152,7 +157,7 @@ export async function getPendingScheduledMessages(
     },
     {
       populate: ["webhook"],
-      orderBy: { scheduledAt: "ASC" },
+      orderBy: { scheduledAt: "ASC", sentAt: "ASC" },
     }
   );
 }
