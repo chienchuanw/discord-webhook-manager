@@ -583,9 +583,13 @@ export function WebhookDetail({
             </div>
           </div>
 
-          {/* 右側可收合資訊面板 */}
-          {isInfoPanelOpen && (
-            <aside className="w-72 shrink-0 border-l border-[#3f4147] bg-[#2b2d31]">
+          {/* 右側可收合資訊面板 - 使用 width transition 實現滑入/滑出動畫 */}
+          <aside
+            className={`shrink-0 overflow-hidden border-l border-[#3f4147] bg-[#2b2d31] transition-all duration-300 ease-in-out ${
+              isInfoPanelOpen ? "w-72" : "w-0 border-l-0"
+            }`}
+          >
+            <div className="w-72">
               <div className="flex items-center justify-between border-b border-[#3f4147] px-4 py-2">
                 <span className="text-sm font-medium text-muted-foreground">
                   Webhook 資訊
@@ -653,8 +657,8 @@ export function WebhookDetail({
                   </>
                 )}
               </div>
-            </aside>
-          )}
+            </div>
+          </aside>
         </div>
       </div>
 
