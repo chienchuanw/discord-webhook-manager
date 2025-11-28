@@ -228,13 +228,13 @@ export default function Home() {
         />
       )}
 
-      {/* 主內容區 */}
-      <SidebarInset className="flex min-h-screen flex-col">
+      {/* 主內容區 - 固定視口高度，防止整頁滾動 */}
+      <SidebarInset className="flex h-screen flex-col overflow-hidden">
         {/* 行動裝置專用頂部導覽列 */}
         {!isEmpty && <MobileHeader />}
 
-        {/* 主要內容 */}
-        <div className="flex-1">
+        {/* 主要內容 - min-h-0 確保 flex 子元素可正確收縮 */}
+        <div className="min-h-0 flex-1">
           {isEmpty ? (
             // 空狀態：歡迎頁面
             <EmptyState onAddWebhook={handleAddWebhook} />

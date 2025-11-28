@@ -68,25 +68,65 @@ export async function createMessageLog(
 }
 
 /**
- * 取得指定 Webhook 的訊息記錄
+ * 分頁查詢結果的型別定義
+ */
+export interface PaginatedMessageLogs {
+  messages: MessageLog[];
+  hasMore: boolean;
+  nextCursor: string | null;
+}
+
+/**
+ * 取得指定 Webhook 的訊息記錄（支援分頁）
+ *
+ * 使用 cursor-based 分頁方式，以 sentAt 時間戳作為游標
+ * 查詢結果按發送時間降序排列（最新的在前）
+ *
  * @param em EntityManager 實例
  * @param webhookId Webhook ID
- * @param limit 回傳筆數（預設 10）
- * @returns MessageLog 陣列，按發送時間降序排列
+ * @param limit 回傳筆數（預設 20）
+ * @param cursor 分頁游標（ISO 格式的時間字串），用於載入更舊的訊息
+ * @returns 包含訊息陣列、是否有更多資料、下一頁游標的物件
  */
 export async function getMessageLogs(
   em: EntityManager,
   webhookId: string,
-  limit: number = 10
-): Promise<MessageLog[]> {
-  return em.find(
-    MessageLog,
-    { webhook: { id: webhookId } },
-    {
-      orderBy: { sentAt: "DESC" },
-      limit,
-    }
-  );
+  limit: number = 20,
+  cursor?: string
+): Promise<PaginatedMessageLogs> {
+  // 建立查詢條件
+  const where: Record<string, unknown> = { webhook: { id: webhookId } };
+
+  // 如果有提供 cursor，查詢比該時間更早的訊息
+  if (cursor) {
+    where.sentAt = { $lt: new Date(cursor) };
+  }
+
+  // 多查一筆用來判斷是否還有更多資料
+  const messages = await em.find(MessageLog, where, {
+    orderBy: { sentAt: "DESC" },
+    limit: limit + 1,
+  });
+
+  // 判斷是否有下一頁
+  const hasMore = messages.length > limit;
+
+  // 如果有多的那一筆，移除它
+  if (hasMore) {
+    messages.pop();
+  }
+
+  // 計算下一頁的 cursor（使用最後一筆的 sentAt）
+  const nextCursor =
+    hasMore && messages.length > 0
+      ? messages[messages.length - 1].sentAt.toISOString()
+      : null;
+
+  return {
+    messages,
+    hasMore,
+    nextCursor,
+  };
 }
 
 /**
@@ -185,4 +225,3 @@ export async function sendMessage(
     };
   }
 }
-

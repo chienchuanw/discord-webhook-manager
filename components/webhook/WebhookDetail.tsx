@@ -10,9 +10,10 @@ import {
   Loader2,
   Clock,
   Ban,
-  Bot,
   Hash,
 } from "lucide-react";
+
+import { faDiscord } from "@fortawesome/free-brands-svg-icons";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -27,6 +28,7 @@ import {
 } from "@/components/ui/tooltip";
 import type { WebhookItem } from "@/components/layout/WebhookSidebar";
 import { ScheduleDialog } from "@/components/webhook/ScheduleDialog";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 /* ============================================
    訊息記錄型別定義
@@ -80,16 +82,28 @@ export function WebhookDetail({
   const [isSending, setIsSending] = React.useState(false);
   const [messageLogs, setMessageLogs] = React.useState<MessageLogItem[]>([]);
   const [isLoadingLogs, setIsLoadingLogs] = React.useState(false);
+  const [isLoadingMore, setIsLoadingMore] = React.useState(false);
+  const [hasMore, setHasMore] = React.useState(false);
+  const [nextCursor, setNextCursor] = React.useState<string | null>(null);
   const [scheduleDialogOpen, setScheduleDialogOpen] = React.useState(false);
 
-  // 載入訊息歷史記錄
+  // 訊息列表容器的 ref，用於偵測滾動
+  const messageListRef = React.useRef<HTMLDivElement>(null);
+
+  // 載入最新的訊息歷史記錄（重置分頁）
   const fetchMessageLogs = React.useCallback(async () => {
     setIsLoadingLogs(true);
     try {
-      const response = await fetch(`/api/webhooks/${webhook.id}/messages`);
+      const response = await fetch(
+        `/api/webhooks/${webhook.id}/messages?limit=20`
+      );
       if (response.ok) {
         const data = await response.json();
-        setMessageLogs(data.messages || []);
+        // API 回傳的是最新的在前，需要反轉順序讓最新的在下方
+        const reversedMessages = [...(data.messages || [])].reverse();
+        setMessageLogs(reversedMessages);
+        setHasMore(data.hasMore || false);
+        setNextCursor(data.nextCursor || null);
       }
     } catch (error) {
       console.error("載入訊息歷史失敗:", error);
@@ -98,10 +112,61 @@ export function WebhookDetail({
     }
   }, [webhook.id]);
 
+  // 載入更多舊訊息（infinite scroll）
+  const fetchMoreMessages = React.useCallback(async () => {
+    if (isLoadingMore || !hasMore || !nextCursor) return;
+
+    setIsLoadingMore(true);
+    try {
+      const response = await fetch(
+        `/api/webhooks/${
+          webhook.id
+        }/messages?limit=20&cursor=${encodeURIComponent(nextCursor)}`
+      );
+      if (response.ok) {
+        const data = await response.json();
+        // 舊訊息要插入到列表前面，並反轉順序
+        const reversedMessages = [...(data.messages || [])].reverse();
+        setMessageLogs((prev) => [...reversedMessages, ...prev]);
+        setHasMore(data.hasMore || false);
+        setNextCursor(data.nextCursor || null);
+      }
+    } catch (error) {
+      console.error("載入更多訊息失敗:", error);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  }, [webhook.id, isLoadingMore, hasMore, nextCursor]);
+
   // 元件載入時取得訊息歷史
   React.useEffect(() => {
     fetchMessageLogs();
   }, [fetchMessageLogs]);
+
+  // 監聽滾動事件，實作 infinite scroll（往上滾動載入舊訊息）
+  React.useEffect(() => {
+    const container = messageListRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      // 當滾動到接近頂部時（距離頂部 100px 內），載入更多
+      if (container.scrollTop < 100 && hasMore && !isLoadingMore) {
+        // 記錄當前滾動高度，用於載入後維持位置
+        const previousScrollHeight = container.scrollHeight;
+
+        fetchMoreMessages().then(() => {
+          // 載入完成後，調整滾動位置以維持視覺連續性
+          requestAnimationFrame(() => {
+            const newScrollHeight = container.scrollHeight;
+            container.scrollTop = newScrollHeight - previousScrollHeight;
+          });
+        });
+      }
+    };
+
+    container.addEventListener("scroll", handleScroll);
+    return () => container.removeEventListener("scroll", handleScroll);
+  }, [hasMore, isLoadingMore, fetchMoreMessages]);
 
   // 發送訊息
   const handleSendMessage = async () => {
@@ -254,10 +319,10 @@ export function WebhookDetail({
         </div>
       </header>
 
-      {/* 主要內容區 - 兩欄式佈局 */}
-      <div className="flex flex-1 flex-col overflow-hidden lg:flex-row">
-        {/* 左側：Webhook 資訊卡片（桌面版顯示在側邊，手機版顯示在上方） */}
-        <aside className="w-full shrink-0 border-b border-border bg-[#2b2d31] p-4 lg:w-72 lg:border-b-0 lg:border-r">
+      {/* 主要內容區 - 兩欄式佈局，固定在視口高度內 */}
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden lg:flex-row">
+        {/* 左側：Webhook 資訊卡片（桌面版顯示在側邊，手機版摺疊顯示） */}
+        <aside className="w-full shrink-0 overflow-y-auto border-b border-border bg-[#2b2d31] p-4 lg:w-72 lg:border-b-0 lg:border-r">
           <Card className="border-border bg-[#232428]">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
@@ -306,8 +371,8 @@ export function WebhookDetail({
           </Card>
         </aside>
 
-        {/* 右側：Discord 聊天室風格區域 */}
-        <main className="flex flex-1 flex-col overflow-hidden bg-[#313338]">
+        {/* 右側：Discord 聊天室風格區域，min-h-0 確保 flex 子元素可正確收縮 */}
+        <main className="flex min-h-0 flex-1 flex-col overflow-hidden bg-[#313338]">
           {/* 聊天室標題列 */}
           <div className="flex items-center justify-between border-b border-[#3f4147] px-4 py-2">
             <span className="text-sm text-muted-foreground">訊息發送記錄</span>
@@ -326,7 +391,10 @@ export function WebhookDetail({
           </div>
 
           {/* 訊息列表區域 - Discord 風格 */}
-          <div className="flex-1 overflow-y-auto px-4 py-4">
+          <div
+            ref={messageListRef}
+            className="flex-1 overflow-y-auto px-4 py-4"
+          >
             {isLoadingLogs ? (
               <div className="flex h-full items-center justify-center">
                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -345,6 +413,25 @@ export function WebhookDetail({
               </div>
             ) : (
               <div className="space-y-4">
+                {/* 載入更多指示器 */}
+                {isLoadingMore && (
+                  <div className="flex items-center justify-center py-4">
+                    <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                    <span className="ml-2 text-sm text-muted-foreground">
+                      載入更多訊息...
+                    </span>
+                  </div>
+                )}
+
+                {/* 沒有更多訊息的提示 */}
+                {!hasMore && messageLogs.length > 0 && (
+                  <div className="flex items-center justify-center py-4">
+                    <span className="text-xs text-muted-foreground">
+                      — 已顯示所有訊息 —
+                    </span>
+                  </div>
+                )}
+
                 {messageLogs.map((log) => (
                   <div
                     key={log.id}
@@ -353,7 +440,10 @@ export function WebhookDetail({
                     {/* Bot 頭像 */}
                     <div className="shrink-0">
                       <div className="flex h-10 w-10 items-center justify-center rounded-full bg-discord-blurple">
-                        <Bot className="h-5 w-5 text-white" />
+                        <FontAwesomeIcon
+                          icon={faDiscord}
+                          className="h-5 w-5 text-white"
+                        />
                       </div>
                     </div>
 
