@@ -21,8 +21,6 @@ interface DashboardContextType {
   // 資料狀態
   webhooks: WebhookData[];
   setWebhooks: React.Dispatch<React.SetStateAction<WebhookData[]>>;
-  selectedId: string | undefined;
-  setSelectedId: (id: string | undefined) => void;
   isLoading: boolean;
 
   // API 操作
@@ -30,7 +28,7 @@ interface DashboardContextType {
   handleTestSend: (id: string) => Promise<void>;
   handleToggleActive: (id: string, isActive: boolean) => Promise<void>;
 
-  // 對話框狀態控制（由首頁管理，但需要讓 sidebar 能觸發）
+  // 對話框狀態控制（由各頁面管理，但需要讓 sidebar 能觸發）
   openAddDialog: () => void;
   openEditDialog: (id: string) => void;
   openDeleteDialog: (id: string) => void;
@@ -64,7 +62,6 @@ export function useDashboard() {
 export function DashboardProvider({ children }: { children: React.ReactNode }) {
   // Webhook 列表狀態
   const [webhooks, setWebhooks] = React.useState<WebhookData[]>([]);
-  const [selectedId, setSelectedId] = React.useState<string | undefined>();
   const [isLoading, setIsLoading] = React.useState(true);
 
   // 對話框處理函式（由首頁註冊）
@@ -162,8 +159,6 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
   const contextValue: DashboardContextType = {
     webhooks,
     setWebhooks,
-    selectedId,
-    setSelectedId,
     isLoading,
     fetchWebhooks,
     handleTestSend,
@@ -180,4 +175,3 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
     </DashboardContext.Provider>
   );
 }
-

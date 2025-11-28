@@ -96,8 +96,10 @@ describe("messageService", () => {
      ============================================ */
   describe("getMessageLogs", () => {
     it("沒有記錄時應該回傳空陣列", async () => {
-      const logs = await getMessageLogs(em, testWebhook.id);
-      expect(logs).toEqual([]);
+      const result = await getMessageLogs(em, testWebhook.id);
+      expect(result.messages).toEqual([]);
+      expect(result.hasMore).toBe(false);
+      expect(result.nextCursor).toBeNull();
     });
 
     it("應該回傳指定 Webhook 的訊息記錄", async () => {
@@ -115,8 +117,8 @@ describe("messageService", () => {
         statusCode: 204,
       });
 
-      const logs = await getMessageLogs(em, testWebhook.id);
-      expect(logs).toHaveLength(2);
+      const result = await getMessageLogs(em, testWebhook.id);
+      expect(result.messages).toHaveLength(2);
     });
 
     it("應該按照發送時間降序排列（最新的在前）", async () => {
@@ -137,14 +139,14 @@ describe("messageService", () => {
         statusCode: 204,
       });
 
-      const logs = await getMessageLogs(em, testWebhook.id);
-      expect(logs[0].content).toBe("較新的訊息");
-      expect(logs[1].content).toBe("較早的訊息");
+      const result = await getMessageLogs(em, testWebhook.id);
+      expect(result.messages[0].content).toBe("較新的訊息");
+      expect(result.messages[1].content).toBe("較早的訊息");
     });
 
-    it("應該限制回傳筆數（預設 10 筆）", async () => {
-      // 建立 15 筆記錄
-      for (let i = 0; i < 15; i++) {
+    it("應該限制回傳筆數（預設 20 筆）", async () => {
+      // 建立 25 筆記錄
+      for (let i = 0; i < 25; i++) {
         await createMessageLog(em, {
           webhook: testWebhook,
           content: `訊息 ${i}`,
@@ -153,8 +155,9 @@ describe("messageService", () => {
         });
       }
 
-      const logs = await getMessageLogs(em, testWebhook.id);
-      expect(logs).toHaveLength(10);
+      const result = await getMessageLogs(em, testWebhook.id);
+      expect(result.messages).toHaveLength(20);
+      expect(result.hasMore).toBe(true);
     });
 
     it("應該能自訂回傳筆數", async () => {
@@ -167,8 +170,8 @@ describe("messageService", () => {
         });
       }
 
-      const logs = await getMessageLogs(em, testWebhook.id, 5);
-      expect(logs).toHaveLength(5);
+      const result = await getMessageLogs(em, testWebhook.id, 5);
+      expect(result.messages).toHaveLength(5);
     });
   });
 
@@ -200,9 +203,9 @@ describe("messageService", () => {
       expect(result.messageLog?.status).toBe(MessageStatus.SUCCESS);
 
       // 確認已記錄到資料庫
-      const logs = await getMessageLogs(em, testWebhook.id);
-      expect(logs).toHaveLength(1);
-      expect(logs[0].content).toBe("測試成功發送");
+      const logsResult = await getMessageLogs(em, testWebhook.id);
+      expect(logsResult.messages).toHaveLength(1);
+      expect(logsResult.messages[0].content).toBe("測試成功發送");
     });
 
     it("發送失敗時應該回傳 failed 狀態並記錄錯誤", async () => {

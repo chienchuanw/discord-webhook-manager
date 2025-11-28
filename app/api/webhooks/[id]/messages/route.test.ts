@@ -6,7 +6,10 @@ import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
 import { MikroORM } from "@mikro-orm/postgresql";
 import config from "../../../../../mikro-orm.config";
 import { Webhook } from "../../../../../db/entities/Webhook";
-import { MessageLog, MessageStatus } from "../../../../../db/entities/MessageLog";
+import {
+  MessageLog,
+  MessageStatus,
+} from "../../../../../db/entities/MessageLog";
 import { GET } from "./route";
 
 describe("GET /api/webhooks/[id]/messages", () => {
@@ -85,12 +88,13 @@ describe("GET /api/webhooks/[id]/messages", () => {
     expect(data.messages[0]).toHaveProperty("sentAt");
   });
 
-  it("應該限制回傳最多 10 筆記錄", async () => {
+  it("應該限制回傳最多 limit 筆記錄（預設 20 筆）", async () => {
     const em = orm.em.fork();
     const webhook = await em.findOne(Webhook, { id: testWebhookId });
     if (webhook) {
       const logs = [];
-      for (let i = 0; i < 15; i++) {
+      // 建立 25 筆記錄，超過預設的 20 筆限制
+      for (let i = 0; i < 25; i++) {
         const log = new MessageLog(webhook, `訊息 ${i}`, MessageStatus.SUCCESS);
         log.statusCode = 204;
         logs.push(log);
@@ -109,7 +113,9 @@ describe("GET /api/webhooks/[id]/messages", () => {
     const data = await response.json();
 
     expect(response.status).toBe(200);
-    expect(data.messages).toHaveLength(10);
+    // 預設 limit 為 20，所以應該回傳 20 筆
+    expect(data.messages).toHaveLength(20);
+    expect(data.hasMore).toBe(true);
   });
 
   it("Webhook 不存在應該回傳 404", async () => {
@@ -156,4 +162,3 @@ describe("GET /api/webhooks/[id]/messages", () => {
     expect(data.messages[1].content).toBe("較早的訊息");
   });
 });
-

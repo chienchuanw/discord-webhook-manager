@@ -13,8 +13,6 @@ import { useDashboard } from "@/contexts/DashboardContext";
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const {
     webhooks,
-    selectedId,
-    setSelectedId,
     isLoading,
     openAddDialog,
     openEditDialog,
@@ -40,8 +38,6 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       {!isEmpty && (
         <WebhookSidebar
           webhooks={webhooks}
-          selectedId={selectedId}
-          onSelect={setSelectedId}
           onAdd={openAddDialog}
           onEdit={openEditDialog}
           onDelete={openDeleteDialog}
@@ -60,4 +56,3 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     </SidebarProvider>
   );
 }
-

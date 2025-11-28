@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Search, Plus, MoreVertical, Circle } from "lucide-react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faDiscord } from "@fortawesome/free-brands-svg-icons";
@@ -44,8 +45,6 @@ export interface WebhookItem {
 
 interface WebhookSidebarProps {
   webhooks: WebhookItem[];
-  selectedId?: string;
-  onSelect: (id: string) => void;
   onAdd: () => void;
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
@@ -58,13 +57,12 @@ interface WebhookSidebarProps {
    ============================================ */
 export function WebhookSidebar({
   webhooks,
-  selectedId,
-  onSelect,
   onAdd,
   onEdit,
   onDelete,
   onTestSend,
 }: WebhookSidebarProps) {
+  const pathname = usePathname();
   const [searchQuery, setSearchQuery] = React.useState("");
 
   // 根據搜尋關鍵字過濾 Webhook
@@ -123,8 +121,7 @@ export function WebhookSidebar({
                 <WebhookListItem
                   key={webhook.id}
                   webhook={webhook}
-                  isSelected={selectedId === webhook.id}
-                  onSelect={() => onSelect(webhook.id)}
+                  isSelected={pathname === `/webhooks/${webhook.id}`}
                   onEdit={() => onEdit(webhook.id)}
                   onDelete={() => onDelete(webhook.id)}
                   onTestSend={() => onTestSend(webhook.id)}
@@ -153,12 +150,11 @@ export function WebhookSidebar({
 
 /* ============================================
    WebhookListItem 元件
-   單一 Webhook 項目的顯示
+   單一 Webhook 項目的顯示，使用 Link 導航到 /webhooks/[slug]
    ============================================ */
 interface WebhookListItemProps {
   webhook: WebhookItem;
   isSelected: boolean;
-  onSelect: () => void;
   onEdit: () => void;
   onDelete: () => void;
   onTestSend: () => void;
@@ -167,7 +163,6 @@ interface WebhookListItemProps {
 function WebhookListItem({
   webhook,
   isSelected,
-  onSelect,
   onEdit,
   onDelete,
   onTestSend,
@@ -175,28 +170,33 @@ function WebhookListItem({
   return (
     <SidebarMenuItem>
       <SidebarMenuButton
+        asChild
         isActive={isSelected}
-        onClick={onSelect}
         className="group relative pr-8"
       >
-        {/* Webhook 圖示與狀態指示 */}
-        <div className="relative">
-          <FontAwesomeIcon
-            icon={faDiscord}
-            className="h-4 w-4 text-muted-foreground"
-          />
-          {/* 狀態指示燈 */}
-          <Circle
-            className={`absolute -bottom-0.5 -right-0.5 h-2 w-2 fill-current ${
-              webhook.isActive ? "text-discord-green" : "text-muted-foreground"
-            }`}
-          />
-        </div>
+        {/* 使用 Link 導航到 /webhooks/[slug] */}
+        <Link href={`/webhooks/${webhook.id}`}>
+          {/* Webhook 圖示與狀態指示 */}
+          <div className="relative">
+            <FontAwesomeIcon
+              icon={faDiscord}
+              className="h-4 w-4 text-muted-foreground"
+            />
+            {/* 狀態指示燈 */}
+            <Circle
+              className={`absolute -bottom-0.5 -right-0.5 h-2 w-2 fill-current ${
+                webhook.isActive
+                  ? "text-discord-green"
+                  : "text-muted-foreground"
+              }`}
+            />
+          </div>
 
-        {/* Webhook 名稱與統計 */}
-        <div className="flex flex-1 flex-col overflow-hidden">
-          <span className="truncate text-sm font-medium">{webhook.name}</span>
-        </div>
+          {/* Webhook 名稱與統計 */}
+          <div className="flex flex-1 flex-col overflow-hidden">
+            <span className="truncate text-sm font-medium">{webhook.name}</span>
+          </div>
+        </Link>
       </SidebarMenuButton>
 
       {/* 操作選單 */}
