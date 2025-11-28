@@ -627,10 +627,23 @@ export function WebhookDetail({
                     value={messageContent}
                     onChange={(e) => setMessageContent(e.target.value)}
                     onKeyDown={(e) => {
-                      // Ctrl/Cmd + Enter 發送訊息
-                      if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
-                        e.preventDefault();
-                        handleSendMessage();
+                      // 如果正在使用輸入法（例如中文輸入法選字中），不處理 Enter
+                      // isComposing 為 true 表示 IME 正在組字
+                      if (e.nativeEvent.isComposing) {
+                        return;
+                      }
+
+                      if (e.key === "Enter") {
+                        if (e.ctrlKey || e.metaKey) {
+                          // Cmd/Ctrl + Enter：插入換行
+                          e.preventDefault();
+                          setMessageContent((prev) => prev + "\n");
+                        } else if (!e.shiftKey) {
+                          // 單獨按 Enter：發送訊息
+                          e.preventDefault();
+                          handleSendMessage();
+                        }
+                        // Shift + Enter：保留預設行為（換行）
                       }
                     }}
                     className="min-h-6 max-h-[200px] flex-1 resize-none border-0 bg-transparent p-0 text-sm placeholder:text-muted-foreground focus-visible:ring-0"
@@ -673,13 +686,18 @@ export function WebhookDetail({
               {/* 快捷鍵提示 */}
               {webhook.isActive && (
                 <p className="mt-2 text-center text-xs text-muted-foreground">
-                  按下{" "}
-                  <kbd className="rounded bg-[#232428] px-1.5 py-0.5">Ctrl</kbd>{" "}
+                  <kbd className="rounded bg-[#232428] px-1.5 py-0.5">
+                    Enter
+                  </kbd>{" "}
+                  發送，{" "}
+                  <kbd className="rounded bg-[#232428] px-1.5 py-0.5">
+                    Shift
+                  </kbd>{" "}
                   +{" "}
                   <kbd className="rounded bg-[#232428] px-1.5 py-0.5">
                     Enter
                   </kbd>{" "}
-                  快速發送
+                  換行
                 </p>
               )}
             </div>
