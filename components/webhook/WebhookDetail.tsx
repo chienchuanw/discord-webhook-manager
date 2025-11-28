@@ -170,39 +170,27 @@ export function WebhookDetail({
     return () => container.removeEventListener("scroll", handleScroll);
   }, [hasMore, isLoadingMore, fetchMoreMessages]);
 
-  // 發送訊息
+  // 發送訊息（使用樂觀更新）
   const handleSendMessage = async () => {
     if (!messageContent.trim() || isSending) return;
 
+    const content = messageContent.trim();
+    // 生成臨時 ID，用於識別樂觀更新的訊息
+    const tempId = `temp-${Date.now()}`;
+
+    // 建立樂觀更新的訊息物件（顯示為「發送中」狀態）
+    const optimisticMessage: MessageLogItem = {
+      id: tempId,
+      content,
+      status: "pending",
+      sentAt: new Date().toISOString(),
+    };
+
+    // 立即將訊息加入列表底部，並清空輸入框
+    setMessageLogs((prev) => [...prev, optimisticMessage]);
+    setMessageContent("");
     setIsSending(true);
-    try {
-      const response = await fetch(`/api/webhooks/${webhook.id}/send`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: messageContent.trim() }),
-      });
 
-      const data = await response.json();
-
-      if (response.ok) {
-        // 清空輸入框並重新載入歷史記錄
-        setMessageContent("");
-        await fetchMessageLogs();
-      } else {
-        console.error("發送失敗:", data.error);
-      }
-    } catch (error) {
-      console.error("發送訊息失敗:", error);
-    } finally {
-      setIsSending(false);
-    }
-  };
-
-  // 重新發送失敗的訊息
-  const handleResendMessage = async (content: string) => {
-    setMessageContent(content);
-    // 自動觸發發送
-    setIsSending(true);
     try {
       const response = await fetch(`/api/webhooks/${webhook.id}/send`, {
         method: "POST",
@@ -210,14 +198,128 @@ export function WebhookDetail({
         body: JSON.stringify({ content }),
       });
 
+      const data = await response.json();
+
       if (response.ok) {
-        await fetchMessageLogs();
+        // 發送成功：用伺服器回傳的真實資料替換樂觀更新的訊息
+        setMessageLogs((prev) =>
+          prev.map((msg) =>
+            msg.id === tempId
+              ? {
+                  ...data.messageLog,
+                  status: "success" as const,
+                }
+              : msg
+          )
+        );
+      } else {
+        // 發送失敗：更新樂觀訊息的狀態為失敗
+        setMessageLogs((prev) =>
+          prev.map((msg) =>
+            msg.id === tempId
+              ? {
+                  ...msg,
+                  status: "failed" as const,
+                  errorMessage: data.error || "發送失敗",
+                }
+              : msg
+          )
+        );
+        console.error("發送失敗:", data.error);
       }
     } catch (error) {
+      // 網路錯誤：更新樂觀訊息的狀態為失敗
+      setMessageLogs((prev) =>
+        prev.map((msg) =>
+          msg.id === tempId
+            ? {
+                ...msg,
+                status: "failed" as const,
+                errorMessage: "網路錯誤，請稍後再試",
+              }
+            : msg
+        )
+      );
+      console.error("發送訊息失敗:", error);
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  // 重新發送失敗的訊息（使用樂觀更新）
+  const handleResendMessage = async (
+    failedMessageId: string,
+    content: string
+  ) => {
+    // 生成新的臨時 ID
+    const tempId = `temp-${Date.now()}`;
+
+    // 建立樂觀更新的訊息物件
+    const optimisticMessage: MessageLogItem = {
+      id: tempId,
+      content,
+      status: "pending",
+      sentAt: new Date().toISOString(),
+    };
+
+    // 移除失敗的訊息，並在列表底部加入新的樂觀訊息
+    setMessageLogs((prev) => [
+      ...prev.filter((msg) => msg.id !== failedMessageId),
+      optimisticMessage,
+    ]);
+    setIsSending(true);
+
+    try {
+      const response = await fetch(`/api/webhooks/${webhook.id}/send`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // 發送成功：用伺服器回傳的真實資料替換樂觀訊息
+        setMessageLogs((prev) =>
+          prev.map((msg) =>
+            msg.id === tempId
+              ? {
+                  ...data.messageLog,
+                  status: "success" as const,
+                }
+              : msg
+          )
+        );
+      } else {
+        // 發送失敗：更新樂觀訊息的狀態為失敗
+        setMessageLogs((prev) =>
+          prev.map((msg) =>
+            msg.id === tempId
+              ? {
+                  ...msg,
+                  status: "failed" as const,
+                  errorMessage: data.error || "發送失敗",
+                }
+              : msg
+          )
+        );
+      }
+    } catch (error) {
+      // 網路錯誤：更新樂觀訊息的狀態為失敗
+      setMessageLogs((prev) =>
+        prev.map((msg) =>
+          msg.id === tempId
+            ? {
+                ...msg,
+                status: "failed" as const,
+                errorMessage: "網路錯誤，請稍後再試",
+              }
+            : msg
+        )
+      );
       console.error("重新發送失敗:", error);
     } finally {
       setIsSending(false);
-      setMessageContent("");
     }
   };
 
@@ -489,7 +591,7 @@ export function WebhookDetail({
                                   variant="ghost"
                                   size="icon"
                                   onClick={() =>
-                                    handleResendMessage(log.content)
+                                    handleResendMessage(log.id, log.content)
                                   }
                                   disabled={isSending}
                                   className="h-7 w-7 text-muted-foreground hover:bg-[#3f4147]"
@@ -715,6 +817,17 @@ function getStatusBadge(log: MessageLogItem): React.ReactNode {
   }
 
   // 一般訊息狀態
+  if (log.status === "pending") {
+    return (
+      <Badge
+        variant="outline"
+        className="border-muted-foreground/50 bg-muted/10 text-muted-foreground"
+      >
+        發送中...
+      </Badge>
+    );
+  }
+
   if (log.status === "success") {
     return (
       <Badge
