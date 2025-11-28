@@ -3,7 +3,7 @@
 import * as React from "react";
 import { format } from "date-fns";
 import { zhTW } from "date-fns/locale";
-import { Clock, CalendarIcon, Loader2 } from "lucide-react";
+import { CalendarIcon, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -62,12 +62,16 @@ export function ScheduleDialog({
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
-  // 重置狀態
+  // 重置狀態並設定預設值（今天日期 + 現在時間 + 1 分鐘）
   React.useEffect(() => {
     if (open) {
-      setSelectedDate(undefined);
-      setSelectedHour("12");
-      setSelectedMinute("00");
+      const now = new Date();
+      // 加上 1 分鐘
+      const defaultTime = new Date(now.getTime() + 60 * 1000);
+
+      setSelectedDate(defaultTime);
+      setSelectedHour(defaultTime.getHours().toString().padStart(2, "0"));
+      setSelectedMinute(defaultTime.getMinutes().toString().padStart(2, "0"));
       setError(null);
     }
   }, [open]);
@@ -146,7 +150,6 @@ export function ScheduleDialog({
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Clock className="h-5 w-5" />
             預約發送
           </DialogTitle>
           <DialogDescription>
