@@ -7,6 +7,7 @@ import {
 } from "@mikro-orm/core";
 import { randomUUID } from "crypto";
 import type { MessageLog } from "./MessageLog";
+import type { WebhookSchedule } from "./WebhookSchedule";
 
 /**
  * Webhook Entity
@@ -58,6 +59,13 @@ export class Webhook {
    */
   @OneToMany("MessageLog", "webhook")
   messageLogs = new Collection<MessageLog>(this);
+
+  /**
+   * 排程列表
+   * 使用 OneToMany 建立一對多關係
+   */
+  @OneToMany("WebhookSchedule", "webhook")
+  schedules = new Collection<WebhookSchedule>(this);
 
   /**
    * 建構子

@@ -4,6 +4,8 @@ import { SqlHighlighter } from "@mikro-orm/sql-highlighter";
 import * as dotenv from "dotenv";
 import { Webhook } from "./db/entities/Webhook";
 import { MessageLog } from "./db/entities/MessageLog";
+import { Template } from "./db/entities/Template";
+import { WebhookSchedule } from "./db/entities/WebhookSchedule";
 
 // 根據環境載入對應的環境變數檔
 // 測試環境：vitest.setup.ts 會先載入 .env.test
@@ -25,7 +27,7 @@ export default defineConfig({
   dbName: process.env.DATABASE_NAME || "db_discord_webhook_manager",
 
   // Entity 類別（直接引入，避免 glob 路徑問題）
-  entities: [Webhook, MessageLog],
+  entities: [Webhook, MessageLog, Template, WebhookSchedule],
 
   // 開發模式設定（非 production 環境啟用 debug 日誌）
   debug: process.env.NODE_ENV !== "production",
