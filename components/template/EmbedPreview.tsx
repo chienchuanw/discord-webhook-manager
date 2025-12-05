@@ -1,7 +1,7 @@
 "use client";
 
-import * as React from "react";
 import { useDeferredValue, useMemo } from "react";
+import Image from "next/image";
 import type { EmbedData } from "@/types/template";
 import {
   parseDiscordMarkdown,
@@ -41,12 +41,10 @@ export function EmbedPreview({
     embedData !== deferredEmbedData ||
     imageUrl !== deferredImageUrl;
 
-  // 使用 useMemo 快取計算結果，避免不必要的重新計算
-  const embedColor = useMemo(() => {
-    return deferredEmbedData?.color
-      ? `#${deferredEmbedData.color.toString(16).padStart(6, "0")}`
-      : "#202225";
-  }, [deferredEmbedData?.color]);
+  // 計算 Embed 顏色（直接使用，React Compiler 會自動優化）
+  const embedColor = deferredEmbedData?.color
+    ? `#${deferredEmbedData.color.toString(16).padStart(6, "0")}`
+    : "#202225";
 
   // 使用 useMemo 快取判斷結果
   const hasEmbed = useMemo(() => {
@@ -104,10 +102,13 @@ export function EmbedPreview({
               {deferredEmbedData?.author && (
                 <div className="mb-2 flex items-center gap-2">
                   {deferredEmbedData.author.icon_url && (
-                    <img
+                    <Image
                       src={deferredEmbedData.author.icon_url}
                       alt=""
-                      className="h-6 w-6 rounded-full"
+                      width={24}
+                      height={24}
+                      className="rounded-full"
+                      unoptimized
                     />
                   )}
                   <span className="text-sm font-medium text-white">
@@ -158,11 +159,15 @@ export function EmbedPreview({
 
               {/* Image（主圖片或上傳的圖片）*/}
               {(deferredEmbedData?.image?.url || deferredImageUrl) && (
-                <div className="mt-3">
-                  <img
-                    src={deferredEmbedData?.image?.url || deferredImageUrl}
+                <div className="relative mt-3 h-[300px] w-full">
+                  <Image
+                    src={
+                      deferredEmbedData?.image?.url || deferredImageUrl || ""
+                    }
                     alt=""
-                    className="max-h-[300px] rounded object-contain"
+                    fill
+                    className="rounded object-contain object-left"
+                    unoptimized
                   />
                 </div>
               )}
@@ -171,10 +176,13 @@ export function EmbedPreview({
               {(deferredEmbedData?.footer || deferredEmbedData?.timestamp) && (
                 <div className="mt-3 flex items-center gap-2 text-xs text-[#949ba4]">
                   {deferredEmbedData.footer?.icon_url && (
-                    <img
+                    <Image
                       src={deferredEmbedData.footer.icon_url}
                       alt=""
-                      className="h-5 w-5 rounded-full"
+                      width={20}
+                      height={20}
+                      className="rounded-full"
+                      unoptimized
                     />
                   )}
                   {deferredEmbedData.footer?.text && (
@@ -202,11 +210,13 @@ export function EmbedPreview({
 
             {/* Thumbnail */}
             {deferredEmbedData?.thumbnail?.url && (
-              <div className="ml-4 shrink-0">
-                <img
+              <div className="relative ml-4 h-20 w-20 shrink-0">
+                <Image
                   src={deferredEmbedData.thumbnail.url}
                   alt=""
-                  className="h-20 w-20 rounded object-cover"
+                  fill
+                  className="rounded object-cover"
+                  unoptimized
                 />
               </div>
             )}
