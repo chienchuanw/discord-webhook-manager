@@ -1,6 +1,5 @@
 "use client";
 
-import * as React from "react";
 import {
   Clock,
   Edit,
@@ -201,14 +200,12 @@ export function WebhookScheduleCard({
                 onClick={() => onEdit(schedule)}
                 className="text-[#b5bac1] focus:bg-[#404249] focus:text-white"
               >
-                <Edit className="mr-2 h-4 w-4" />
                 編輯
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => onDelete(schedule)}
                 className="text-red-400 focus:bg-red-500/10 focus:text-red-400"
               >
-                <Trash2 className="mr-2 h-4 w-4" />
                 刪除
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -232,25 +229,48 @@ export function WebhookScheduleCard({
         )}
 
         {/* 內容預覽 */}
-        <div className="rounded bg-[#1e1f22] p-2">
-          {schedule.embedData?.title && (
-            <p className="line-clamp-1 text-sm font-medium text-white">
-              {schedule.embedData.title}
-            </p>
-          )}
-          {schedule.embedData?.description && (
-            <p className="mt-1 line-clamp-2 text-xs text-[#b5bac1]">
-              {schedule.embedData.description}
-            </p>
-          )}
-          {!schedule.embedData && schedule.messageContent && (
-            <p className="line-clamp-2 text-xs text-[#b5bac1]">
+        <div className="space-y-2 rounded bg-[#1e1f22] p-2">
+          {/* 純文字訊息 */}
+          {schedule.messageContent && (
+            <p className="line-clamp-2 text-xs text-[#dcddde]">
               {schedule.messageContent}
             </p>
           )}
-          {schedule.imageUrl && (
-            <p className="mt-1 text-xs text-[#5865f2]">📷 含有圖片</p>
+
+          {/* Embed 預覽 */}
+          {schedule.embedData && (
+            <div
+              className="rounded border-l-4 bg-[#2b2d31] p-2"
+              style={{
+                borderLeftColor: schedule.embedData.color
+                  ? `#${schedule.embedData.color.toString(16).padStart(6, "0")}`
+                  : "#4f545c",
+              }}
+            >
+              {schedule.embedData.title && (
+                <p className="line-clamp-1 text-sm font-medium text-white">
+                  {schedule.embedData.title}
+                </p>
+              )}
+              {schedule.embedData.description && (
+                <p className="mt-1 line-clamp-2 text-xs text-[#b5bac1]">
+                  {schedule.embedData.description}
+                </p>
+              )}
+            </div>
           )}
+
+          {/* 圖片指示 */}
+          {schedule.imageUrl && (
+            <p className="text-xs text-[#5865f2]">📷 含有圖片</p>
+          )}
+
+          {/* 無內容提示 */}
+          {!schedule.messageContent &&
+            !schedule.embedData &&
+            !schedule.imageUrl && (
+              <p className="text-xs italic text-[#72767d]">（無訊息內容）</p>
+            )}
         </div>
 
         {/* 統計資訊 */}

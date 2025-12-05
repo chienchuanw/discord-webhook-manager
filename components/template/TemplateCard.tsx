@@ -139,14 +139,12 @@ export function TemplateCard({
               onClick={onEdit}
               className="text-[#b5bac1] focus:bg-[#404249] focus:text-white"
             >
-              <Edit className="mr-2 h-4 w-4" />
               編輯
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={onDelete}
               className="text-red-400 focus:bg-red-500/10 focus:text-red-400"
             >
-              <Trash2 className="mr-2 h-4 w-4" />
               刪除
             </DropdownMenuItem>
           </DropdownMenuContent>

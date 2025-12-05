@@ -323,7 +323,7 @@ export function TemplateFormDialog({
                 {/* 基本資訊區 */}
                 <div className="space-y-4">
                   <div className="flex items-center gap-2">
-                    <h3 className="text-xs font-bold uppercase tracking-wide text-[#b5bac1]">
+                    <h3 className="text-xs font-bold tracking-wide text-[#b5bac1]">
                       基本資訊
                     </h3>
                   </div>
@@ -359,7 +359,7 @@ export function TemplateFormDialog({
                 {/* 訊息內容區 */}
                 <div className="space-y-4">
                   <div className="flex items-center gap-2">
-                    <h3 className="text-xs font-bold uppercase tracking-wide text-[#b5bac1]">
+                    <h3 className="text-xs font-bold tracking-wide text-[#b5bac1]">
                       訊息內容
                     </h3>
                   </div>
@@ -386,14 +386,14 @@ export function TemplateFormDialog({
                 {/* Embed 設定區 */}
                 <div className="space-y-4">
                   <div className="flex items-center gap-2">
-                    <h3 className="text-xs font-bold uppercase tracking-wide text-[#b5bac1]">
+                    <h3 className="text-xs font-bold tracking-wide text-[#b5bac1]">
                       Embed 設定
                     </h3>
                   </div>
 
                   {/* 基本設定 */}
                   <div className="space-y-4 rounded-lg bg-[#2b2d31] p-4">
-                    <p className="text-xs font-medium uppercase tracking-wide text-[#949ba4]">
+                    <p className="text-xs font-medium tracking-wide text-[#949ba4]">
                       基本設定
                     </p>
                     <div className="grid gap-4 md:grid-cols-2">
@@ -470,7 +470,7 @@ export function TemplateFormDialog({
 
                   {/* Author 設定 */}
                   <div className="space-y-4 rounded-lg bg-[#2b2d31] p-4">
-                    <p className="text-xs font-medium uppercase tracking-wide text-[#949ba4]">
+                    <p className="text-xs font-medium tracking-wide text-[#949ba4]">
                       Author
                     </p>
                     <div className="grid gap-4 md:grid-cols-3">
@@ -506,7 +506,7 @@ export function TemplateFormDialog({
 
                   {/* 圖片設定 */}
                   <div className="space-y-4 rounded-lg bg-[#2b2d31] p-4">
-                    <p className="text-xs font-medium uppercase tracking-wide text-[#949ba4]">
+                    <p className="text-xs font-medium tracking-wide text-[#949ba4]">
                       圖片
                     </p>
                     <div className="grid gap-4 md:grid-cols-2">
@@ -537,7 +537,7 @@ export function TemplateFormDialog({
 
                   {/* Footer 設定 */}
                   <div className="space-y-4 rounded-lg bg-[#2b2d31] p-4">
-                    <p className="text-xs font-medium uppercase tracking-wide text-[#949ba4]">
+                    <p className="text-xs font-medium tracking-wide text-[#949ba4]">
                       Footer
                     </p>
                     <div className="grid gap-4 md:grid-cols-3">
@@ -574,7 +574,7 @@ export function TemplateFormDialog({
                   {/* Fields 設定 */}
                   <div className="space-y-4 rounded-lg bg-[#2b2d31] p-4">
                     <div className="flex items-center justify-between">
-                      <p className="text-xs font-medium uppercase tracking-wide text-[#949ba4]">
+                      <p className="text-xs font-medium tracking-wide text-[#949ba4]">
                         Fields
                       </p>
                       <Button
@@ -652,7 +652,7 @@ export function TemplateFormDialog({
                 {/* 排程設定區 */}
                 <div className="space-y-4">
                   <div className="flex items-center gap-2">
-                    <h3 className="text-xs font-bold uppercase tracking-wide text-[#b5bac1]">
+                    <h3 className="text-xs font-bold tracking-wide text-[#b5bac1]">
                       排程設定
                     </h3>
                   </div>
@@ -759,7 +759,7 @@ export function TemplateFormDialog({
             <div className="w-[420px] shrink-0 border-l border-[#1e1f22] bg-[#2b2d31]">
               <div className="p-4">
                 <div className="mb-4 flex items-center gap-2">
-                  <h3 className="text-xs font-bold uppercase tracking-wide text-[#b5bac1]">
+                  <h3 className="text-xs font-bold tracking-wide text-[#b5bac1]">
                     即時預覽
                   </h3>
                 </div>
@@ -780,7 +780,7 @@ export function TemplateFormDialog({
               type="button"
               variant="ghost"
               onClick={() => onOpenChange(false)}
-              className="h-10 px-4 text-sm text-white hover:bg-transparent hover:underline"
+              className="text-sm font-medium text-white hover:underline"
             >
               取消
             </Button>

@@ -200,7 +200,7 @@ export function WebhookScheduleFormDialog({
               <div className="space-y-6 p-6">
                 {/* 基本資訊區 */}
                 <div className="space-y-4">
-                  <h3 className="text-xs font-bold uppercase tracking-wide text-[#b5bac1]">
+                  <h3 className="text-xs font-bold tracking-wide text-[#b5bac1]">
                     基本資訊
                   </h3>
                   <div className="space-y-4 rounded-lg bg-[#2b2d31] p-4">
@@ -222,7 +222,7 @@ export function WebhookScheduleFormDialog({
 
                 {/* 訊息內容區 */}
                 <div className="space-y-4">
-                  <h3 className="text-xs font-bold uppercase tracking-wide text-[#b5bac1]">
+                  <h3 className="text-xs font-bold tracking-wide text-[#b5bac1]">
                     訊息內容
                   </h3>
                   <div className="space-y-4 rounded-lg bg-[#2b2d31] p-4">
@@ -247,7 +247,7 @@ export function WebhookScheduleFormDialog({
 
                 {/* Embed 設定區 */}
                 <div className="space-y-4">
-                  <h3 className="text-xs font-bold uppercase tracking-wide text-[#b5bac1]">
+                  <h3 className="text-xs font-bold tracking-wide text-[#b5bac1]">
                     Embed 設定
                   </h3>
                   <div className="space-y-4 rounded-lg bg-[#2b2d31] p-4">
@@ -326,7 +326,7 @@ export function WebhookScheduleFormDialog({
 
                 {/* 排程設定區 */}
                 <div className="space-y-4">
-                  <h3 className="text-xs font-bold uppercase tracking-wide text-[#b5bac1]">
+                  <h3 className="text-xs font-bold tracking-wide text-[#b5bac1]">
                     排程設定
                   </h3>
                   <div className="space-y-4 rounded-lg bg-[#2b2d31] p-4">
@@ -421,8 +421,7 @@ export function WebhookScheduleFormDialog({
             {/* 右側：預覽區 - Discord 風格 */}
             <div className="w-[420px] shrink-0 bg-[#2b2d31] p-4">
               <div className="flex items-center gap-2">
-                <div className="h-2 w-2 rounded-full bg-[#3ba55c]" />
-                <h3 className="text-xs font-bold uppercase tracking-wide text-[#b5bac1]">
+                <h3 className="text-xs font-bold tracking-wide text-[#b5bac1]">
                   即時預覽
                 </h3>
               </div>
@@ -437,14 +436,15 @@ export function WebhookScheduleFormDialog({
           </div>
 
           {/* 底部按鈕區 - Discord 風格 */}
-          <DialogFooter className="bg-[#2b2d31] px-6 py-4">
-            <button
+          <DialogFooter className="flex justify-end gap-3 bg-[#2b2d31] px-6 py-4">
+            <Button
+              variant="ghost"
               type="button"
               onClick={() => onOpenChange(false)}
               className="text-sm font-medium text-white hover:underline"
             >
               取消
-            </button>
+            </Button>
             <Button
               type="submit"
               disabled={isSubmitting || !name}
