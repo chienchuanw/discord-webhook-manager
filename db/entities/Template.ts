@@ -2,48 +2,11 @@ import { Entity, PrimaryKey, Property, Enum } from "@mikro-orm/core";
 import { randomUUID } from "crypto";
 
 /**
- * 排程類型列舉
- * INTERVAL: 固定間隔（每 X 分鐘）
- * DAILY: 每天固定時間
- * WEEKLY: 每週固定時間與星期幾
+ * 從共用型別匯入 ScheduleType 和 EmbedData
+ * 這些型別定義在 types/template.ts 中，可以在客戶端和伺服器端共用
  */
-export enum ScheduleType {
-  INTERVAL = "interval",
-  DAILY = "daily",
-  WEEKLY = "weekly",
-}
-
-/**
- * Discord Embed 資料結構
- * 對應 Discord Webhook Embed 格式
- */
-export interface EmbedData {
-  title?: string;
-  description?: string;
-  url?: string;
-  color?: number;
-  timestamp?: string;
-  footer?: {
-    text: string;
-    icon_url?: string;
-  };
-  thumbnail?: {
-    url: string;
-  };
-  image?: {
-    url: string;
-  };
-  author?: {
-    name: string;
-    url?: string;
-    icon_url?: string;
-  };
-  fields?: Array<{
-    name: string;
-    value: string;
-    inline?: boolean;
-  }>;
-}
+import { ScheduleType, type EmbedData } from "@/types/template";
+export { ScheduleType, type EmbedData };
 
 /**
  * Template Entity
@@ -150,4 +113,3 @@ export class Template {
     this.name = name;
   }
 }
-
