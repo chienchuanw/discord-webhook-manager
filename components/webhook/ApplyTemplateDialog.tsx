@@ -193,7 +193,6 @@ export function ApplyTemplateDialog({
             </div>
           ) : templates.length === 0 ? (
             <div className="flex h-32 flex-col items-center justify-center">
-              <FileText className="mb-2 h-8 w-8 text-[#949ba4]" />
               <p className="text-[#b5bac1]">尚無樣板</p>
               <p className="text-xs text-[#949ba4]">
                 請先到樣板管理頁面建立樣板

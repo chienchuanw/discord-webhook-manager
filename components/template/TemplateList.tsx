@@ -147,7 +147,6 @@ export function TemplateList() {
       {/* 樣板列表 */}
       {templates.length === 0 ? (
         <div className="flex h-64 flex-col items-center justify-center rounded-lg border border-dashed border-[#1e1f22] bg-[#2b2d31]">
-          <FileText className="mb-4 h-12 w-12 text-[#949ba4]" />
           <p className="mb-2 text-lg font-medium text-white">尚無樣板</p>
           <p className="mb-4 text-sm text-[#b5bac1]">
             建立第一個樣板來開始使用
@@ -218,4 +217,3 @@ export function TemplateList() {
     </div>
   );
 }
-
