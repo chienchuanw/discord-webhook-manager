@@ -46,3 +46,7 @@ next-env.d.ts
 
 # vscode
 /.vscode
+
+# uploads (使用者上傳的圖片)
+/public/uploads/*
+!/public/uploads/.gitkeep
