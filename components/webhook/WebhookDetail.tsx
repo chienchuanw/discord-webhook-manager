@@ -479,7 +479,6 @@ export function WebhookDetail({
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              <Clock className="mr-1 h-3.5 w-3.5" />
               排程管理
             </Button>
           </div>

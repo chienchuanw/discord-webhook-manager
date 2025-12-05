@@ -185,12 +185,11 @@ export function WebhookScheduleList({ webhookId }: WebhookScheduleListProps) {
             重新整理
           </Button>
           <Button
-            variant="outline"
             size="sm"
             onClick={() => setApplyTemplateOpen(true)}
-            className="border-[#5865f2] bg-transparent text-[#5865f2] hover:bg-[#5865f2]/10"
+            className="bg-[#5865f2] text-white hover:bg-[#4752c4]"
           >
-            <FileText className="mr-1 h-4 w-4" />
+            <Plus className="mr-1 h-4 w-4" />
             套用樣板
           </Button>
           <Button
@@ -221,15 +220,13 @@ export function WebhookScheduleList({ webhookId }: WebhookScheduleListProps) {
       {/* 空狀態 */}
       {!isLoading && !error && schedules.length === 0 && (
         <div className="flex h-48 flex-col items-center justify-center rounded-lg border border-dashed border-[#404249] bg-[#2b2d31]">
-          <FileText className="mb-3 h-10 w-10 text-[#949ba4]" />
           <p className="mb-1 text-[#b5bac1]">尚無排程</p>
           <p className="mb-4 text-sm text-[#949ba4]">建立排程來自動發送訊息</p>
           <div className="flex gap-2">
             <Button
-              variant="outline"
               size="sm"
               onClick={() => setApplyTemplateOpen(true)}
-              className="border-[#5865f2] bg-transparent text-[#5865f2] hover:bg-[#5865f2]/10"
+              className="bg-[#5865f2] text-white hover:bg-[#4752c4]"
             >
               套用樣板
             </Button>

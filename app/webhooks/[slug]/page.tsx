@@ -44,7 +44,8 @@ function WebhookPageContent() {
   } = useDashboard();
 
   // 對話框狀態
-  const [isFormOpen, setIsFormOpen] = React.useState(false);
+  const [isAddFormOpen, setIsAddFormOpen] = React.useState(false); // 新增 Webhook
+  const [isEditFormOpen, setIsEditFormOpen] = React.useState(false); // 編輯 Webhook
   const [isDeleteOpen, setIsDeleteOpen] = React.useState(false);
 
   // 根據 slug 找到對應的 webhook
@@ -57,11 +58,11 @@ function WebhookPageContent() {
   React.useEffect(() => {
     registerDialogHandlers({
       onAdd: () => {
-        setIsFormOpen(true);
+        setIsAddFormOpen(true); // 開啟「新增」對話框
       },
       onEdit: (id: string) => {
         if (id === slug) {
-          setIsFormOpen(true);
+          setIsEditFormOpen(true); // 開啟「編輯」對話框
         }
       },
       onDelete: (id: string) => {
@@ -72,14 +73,52 @@ function WebhookPageContent() {
     });
   }, [registerDialogHandlers, slug]);
 
-  // 提交表單（編輯）
-  const handleFormSubmit = async (data: WebhookFormData) => {
+  // 提交表單（新增 Webhook）
+  const handleAddSubmit = async (data: WebhookFormData) => {
+    const response = await fetch("/api/webhooks", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: data.name,
+        url: data.url,
+        isActive: data.isActive,
+      }),
+    });
+
+    if (response.ok) {
+      const created = await response.json();
+      setWebhooks((prev) => [created, ...prev]);
+
+      // 如果有選擇樣板，則套用樣板建立排程
+      if (data.templateId) {
+        try {
+          await fetch(`/api/webhooks/${created.id}/schedules/apply`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ templateId: data.templateId }),
+          });
+        } catch (err) {
+          console.error("套用樣板失敗:", err);
+        }
+      }
+
+      // 導向新建立的 Webhook 詳情頁
+      router.push(`/webhooks/${created.id}`);
+    }
+  };
+
+  // 提交表單（編輯 Webhook）
+  const handleEditSubmit = async (data: WebhookFormData) => {
     if (!webhook) return;
 
     const response = await fetch(`/api/webhooks/${webhook.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
+      body: JSON.stringify({
+        name: data.name,
+        url: data.url,
+        isActive: data.isActive,
+      }),
     });
 
     if (response.ok) {
@@ -121,9 +160,7 @@ function WebhookPageContent() {
         <div className="text-xl font-semibold text-foreground">
           找不到此 Webhook
         </div>
-        <p className="text-muted-foreground">
-          該 Webhook 可能已被刪除或不存在
-        </p>
+        <p className="text-muted-foreground">該 Webhook 可能已被刪除或不存在</p>
         <button
           onClick={() => router.push("/")}
           className="text-primary hover:underline"
@@ -139,17 +176,26 @@ function WebhookPageContent() {
       {/* Webhook 詳情 */}
       <WebhookDetail
         webhook={webhook}
-        onEdit={() => setIsFormOpen(true)}
+        onEdit={() => setIsEditFormOpen(true)}
         onDelete={() => setIsDeleteOpen(true)}
         onTestSend={() => handleTestSend(webhook.id)}
         onToggleActive={(isActive) => handleToggleActive(webhook.id, isActive)}
       />
 
-      {/* 編輯對話框 */}
+      {/* 新增 Webhook 對話框 */}
       <WebhookFormDialog
-        open={isFormOpen}
-        onOpenChange={setIsFormOpen}
-        onSubmit={handleFormSubmit}
+        open={isAddFormOpen}
+        onOpenChange={setIsAddFormOpen}
+        onSubmit={handleAddSubmit}
+        title="新增 Webhook"
+        description="輸入 Webhook 的名稱和 Discord Webhook URL"
+      />
+
+      {/* 編輯 Webhook 對話框 */}
+      <WebhookFormDialog
+        open={isEditFormOpen}
+        onOpenChange={setIsEditFormOpen}
+        onSubmit={handleEditSubmit}
         initialData={{
           name: webhook.name,
           url: webhook.url,
@@ -169,4 +215,3 @@ function WebhookPageContent() {
     </>
   );
 }
-
