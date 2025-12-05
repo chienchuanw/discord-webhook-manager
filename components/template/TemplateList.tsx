@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Plus, FileText } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TemplateCard, type TemplateData } from "./TemplateCard";
 import {
