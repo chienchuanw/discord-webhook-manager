@@ -10,6 +10,7 @@ import {
   ScheduleType,
   type EmbedData,
 } from "../db/entities/Template";
+import { calculateNextTriggerTime } from "./scheduleTriggerService";
 
 /* ============================================
    型別定義
@@ -96,6 +97,9 @@ export async function createWebhookSchedule(
     schedule.isActive = params.isActive;
   }
 
+  // 計算並設定下次觸發時間（重要：沒有此設定，排程不會被觸發）
+  schedule.nextTriggerAt = calculateNextTriggerTime(schedule);
+
   await em.persistAndFlush(schedule);
   return schedule;
 }
@@ -151,23 +155,46 @@ export async function updateWebhookSchedule(
     return null;
   }
 
+  // 記錄是否有變更排程相關設定
+  let scheduleSettingsChanged = false;
+
   // 只更新有提供的欄位
   if (params.name !== undefined) schedule.name = params.name;
   if (params.messageContent !== undefined)
     schedule.messageContent = params.messageContent;
   if (params.embedData !== undefined) schedule.embedData = params.embedData;
   if (params.imageUrl !== undefined) schedule.imageUrl = params.imageUrl;
-  if (params.scheduleType !== undefined)
+  if (params.scheduleType !== undefined) {
     schedule.scheduleType = params.scheduleType;
-  if (params.intervalMinutes !== undefined)
+    scheduleSettingsChanged = true;
+  }
+  if (params.intervalMinutes !== undefined) {
     schedule.intervalMinutes = params.intervalMinutes;
-  if (params.scheduleTime !== undefined)
+    scheduleSettingsChanged = true;
+  }
+  if (params.scheduleTime !== undefined) {
     schedule.scheduleTime = params.scheduleTime;
-  if (params.scheduleDays !== undefined)
+    scheduleSettingsChanged = true;
+  }
+  if (params.scheduleDays !== undefined) {
     schedule.scheduleDays = params.scheduleDays;
-  if (params.isActive !== undefined) schedule.isActive = params.isActive;
-  if (params.nextTriggerAt !== undefined)
+    scheduleSettingsChanged = true;
+  }
+  if (params.isActive !== undefined) {
+    schedule.isActive = params.isActive;
+    // 如果重新啟用排程，也需要重新計算下次觸發時間
+    if (params.isActive) {
+      scheduleSettingsChanged = true;
+    }
+  }
+  if (params.nextTriggerAt !== undefined) {
     schedule.nextTriggerAt = params.nextTriggerAt;
+  }
+
+  // 如果排程設定變更了，重新計算下次觸發時間
+  if (scheduleSettingsChanged && schedule.isActive) {
+    schedule.nextTriggerAt = calculateNextTriggerTime(schedule);
+  }
 
   await em.flush();
   return schedule;
@@ -225,6 +252,9 @@ export async function applyTemplateToWebhook(
   schedule.intervalMinutes = template.intervalMinutes;
   schedule.scheduleTime = template.scheduleTime;
   schedule.scheduleDays = template.scheduleDays;
+
+  // 計算並設定下次觸發時間（重要：沒有此設定，排程不會被觸發）
+  schedule.nextTriggerAt = calculateNextTriggerTime(schedule);
 
   await em.persistAndFlush(schedule);
   return schedule;

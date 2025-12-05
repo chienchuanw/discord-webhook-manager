@@ -2,7 +2,7 @@
  * Local Cron Service
  * 在開發環境中模擬 Vercel Cron Jobs
  *
- * 使用 node-cron 套件每分鐘執行一次預約訊息發送檢查
+ * 使用 node-cron 套件每分鐘執行一次排程處理
  * 僅在 NODE_ENV === 'development' 時啟用
  */
 
@@ -12,18 +12,22 @@ import cron from "node-cron";
 let isStarted = false;
 
 /**
- * 呼叫 cron API 觸發預約訊息發送
+ * 取得基礎 URL
  */
-async function triggerScheduledSend(): Promise<void> {
+function getBaseUrl(): string {
+  const port = process.env.PORT || "3000";
+  return process.env.NEXT_PUBLIC_BASE_URL || `http://localhost:${port}`;
+}
+
+/**
+ * 呼叫 cron API 處理 WebhookSchedule 排程
+ */
+async function triggerProcessSchedules(): Promise<void> {
   try {
-    // 優先使用環境變數，否則根據 PORT 環境變數或預設 3000
-    const port = process.env.PORT || "3000";
-    const baseUrl =
-      process.env.NEXT_PUBLIC_BASE_URL || `http://localhost:${port}`;
-    const response = await fetch(`${baseUrl}/api/cron/send-scheduled`, {
+    const baseUrl = getBaseUrl();
+    const response = await fetch(`${baseUrl}/api/cron/process-schedules`, {
       method: "GET",
       headers: {
-        // 在開發環境中模擬 Vercel Cron 的驗證標頭
         Authorization: `Bearer ${
           process.env.CRON_SECRET || "development-secret"
         }`,
@@ -33,26 +37,76 @@ async function triggerScheduledSend(): Promise<void> {
     if (response.ok) {
       const data = await response.json();
       if (data.processed > 0) {
-        console.log(
-          `[Local Cron] 已處理 ${data.processed} 則預約訊息，成功: ${data.successful}，失敗: ${data.failed}`
+        console.log(`[Local Cron] 已處理 ${data.processed} 則排程訊息`);
+        data.results?.forEach(
+          (r: { scheduleName: string; success: boolean; error?: string }) => {
+            if (r.success) {
+              console.log(`  ✓ ${r.scheduleName}`);
+            } else {
+              console.log(`  ✗ ${r.scheduleName}: ${r.error}`);
+            }
+          }
         );
       }
     } else {
-      console.error(`[Local Cron] 發送失敗: HTTP ${response.status}`);
+      console.error(
+        `[Local Cron] process-schedules 失敗: HTTP ${response.status}`
+      );
     }
   } catch (error) {
-    // 伺服器啟動初期可能還未準備好，忽略連線錯誤
     if (error instanceof Error && error.message.includes("ECONNREFUSED")) {
-      // 靜默忽略連線拒絕錯誤
       return;
     }
-    console.error("[Local Cron] 執行錯誤:", error);
+    console.error("[Local Cron] process-schedules 錯誤:", error);
   }
 }
 
 /**
+ * 呼叫 cron API 發送預約訊息（舊功能，保留相容性）
+ */
+async function triggerScheduledSend(): Promise<void> {
+  try {
+    const baseUrl = getBaseUrl();
+    const response = await fetch(`${baseUrl}/api/cron/send-scheduled`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${
+          process.env.CRON_SECRET || "development-secret"
+        }`,
+      },
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      if (data.processed > 0) {
+        console.log(`[Local Cron] 已處理 ${data.processed} 則預約訊息`);
+      }
+    } else {
+      console.error(
+        `[Local Cron] send-scheduled 失敗: HTTP ${response.status}`
+      );
+    }
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("ECONNREFUSED")) {
+      return;
+    }
+    console.error("[Local Cron] send-scheduled 錯誤:", error);
+  }
+}
+
+/**
+ * 執行所有 cron 任務
+ */
+async function runAllCronTasks(): Promise<void> {
+  // 處理 WebhookSchedule 排程（新功能）
+  await triggerProcessSchedules();
+  // 處理預約訊息（舊功能，保留相容性）
+  await triggerScheduledSend();
+}
+
+/**
  * 啟動本機 cron 服務
- * 每分鐘執行一次預約訊息發送檢查
+ * 每分鐘執行一次排程處理與預約訊息發送
  */
 export function startLocalCron(): void {
   // 避免重複啟動（Next.js 開發模式可能多次載入）
@@ -61,16 +115,16 @@ export function startLocalCron(): void {
   }
 
   isStarted = true;
-  console.log("[Local Cron] 開發環境 cron 服務已啟動，每分鐘檢查預約訊息...");
+  console.log("[Local Cron] 開發環境 cron 服務已啟動，每分鐘檢查排程...");
 
   // 每分鐘執行一次（與 Vercel Cron 相同頻率）
   cron.schedule("* * * * *", () => {
-    triggerScheduledSend();
+    runAllCronTasks();
   });
 
   // 啟動後立即執行一次（延遲 5 秒等待伺服器完全啟動）
   setTimeout(() => {
-    triggerScheduledSend();
+    runAllCronTasks();
   }, 5000);
 }
 
