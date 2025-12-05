@@ -15,6 +15,7 @@ import { MikroORM, EntityManager } from "@mikro-orm/postgresql";
 import config from "../mikro-orm.config";
 import { Webhook } from "../db/entities/Webhook";
 import { MessageLog, MessageStatus } from "../db/entities/MessageLog";
+import { WebhookSchedule } from "../db/entities/WebhookSchedule";
 import {
   sendMessage,
   getMessageLogs,
@@ -39,8 +40,9 @@ describe("messageService", () => {
   // 每個測試前清空資料並建立測試 Webhook
   beforeEach(async () => {
     em = orm.em.fork();
-    // 先清空 message_log（因為有外鍵約束）
+    // 先清空相關資料表（因為有外鍵約束）
     await em.nativeDelete(MessageLog, {});
+    await em.nativeDelete(WebhookSchedule, {});
     await em.nativeDelete(Webhook, {});
 
     // 建立測試用 Webhook
