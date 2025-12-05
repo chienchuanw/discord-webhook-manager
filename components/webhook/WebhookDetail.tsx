@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/tooltip";
 import type { WebhookItem } from "@/components/layout/WebhookSidebar";
 import { ScheduleDialog } from "@/components/webhook/ScheduleDialog";
+import { WebhookScheduleList } from "@/components/webhook/WebhookScheduleList";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 /* ============================================
@@ -91,6 +92,10 @@ export function WebhookDetail({
   const [isInfoPanelOpen, setIsInfoPanelOpen] = React.useState(false);
   // 追蹤使用者是否在訊息列表底部附近
   const [isNearBottom, setIsNearBottom] = React.useState(true);
+  // 控制顯示訊息或排程管理
+  const [activeTab, setActiveTab] = React.useState<"messages" | "schedules">(
+    "messages"
+  );
 
   // 訊息列表容器的 ref，用於偵測滾動
   const messageListRef = React.useRef<HTMLDivElement>(null);
@@ -448,22 +453,53 @@ export function WebhookDetail({
 
       {/* 主要內容區 - Discord 聊天室風格，固定在視口高度內 */}
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-[#313338]">
-        {/* 聊天室標題列 */}
+        {/* 標題列與 Tab 切換 */}
         <div className="flex items-center justify-between border-b border-[#3f4147] px-4 py-2">
-          <span className="text-sm text-muted-foreground">訊息發送記錄</span>
-          <div className="flex items-center gap-1">
+          {/* Tab 切換按鈕 */}
+          <div className="flex gap-1">
             <Button
               variant="ghost"
               size="sm"
-              onClick={fetchMessageLogs}
-              disabled={isLoadingLogs}
-              className="h-7 gap-1 text-xs"
+              onClick={() => setActiveTab("messages")}
+              className={`h-7 text-xs ${
+                activeTab === "messages"
+                  ? "bg-[#3f4147] text-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
             >
-              <RefreshCw
-                className={`h-3.5 w-3.5 ${isLoadingLogs ? "animate-spin" : ""}`}
-              />
-              重新整理
+              訊息記錄
             </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setActiveTab("schedules")}
+              className={`h-7 text-xs ${
+                activeTab === "schedules"
+                  ? "bg-[#3f4147] text-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Clock className="mr-1 h-3.5 w-3.5" />
+              排程管理
+            </Button>
+          </div>
+          <div className="flex items-center gap-1">
+            {activeTab === "messages" && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={fetchMessageLogs}
+                disabled={isLoadingLogs}
+                className="h-7 gap-1 text-xs"
+              >
+                <RefreshCw
+                  className={`h-3.5 w-3.5 ${
+                    isLoadingLogs ? "animate-spin" : ""
+                  }`}
+                />
+                重新整理
+              </Button>
+            )}
             {/* Webhook 資訊面板切換按鈕 */}
             <Tooltip>
               <TooltipTrigger asChild>
@@ -487,263 +523,272 @@ export function WebhookDetail({
           </div>
         </div>
 
-        {/* 內容區域：訊息列表 + 可收合的資訊面板 */}
+        {/* 內容區域：訊息列表/排程管理 + 可收合的資訊面板 */}
         <div className="flex min-h-0 flex-1 overflow-hidden">
-          {/* 訊息區域 */}
-          <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-            {/* 訊息列表容器 - 使用 relative 讓按鈕可以絕對定位 */}
-            <div className="relative flex-1 overflow-hidden">
-              {/* 滾動到底部按鈕 - 固定在訊息列表下方中間 */}
-              {!isNearBottom && messageLogs.length > 0 && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      onClick={() => scrollToBottom(true)}
-                      size="icon"
-                      className="absolute bottom-4 left-1/2 z-10 h-9 w-9 -translate-x-1/2 rounded-full bg-[#2b2d31] shadow-lg hover:bg-[#3f4147]"
-                    >
-                      <ArrowDown className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>滾動到最新訊息</TooltipContent>
-                </Tooltip>
-              )}
-
-              {/* 訊息列表區域 - Discord 風格 */}
-              <div
-                ref={messageListRef}
-                className="h-full overflow-y-auto px-4 py-4"
-              >
-                {isLoadingLogs ? (
-                  <div className="flex h-full items-center justify-center">
-                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                  </div>
-                ) : messageLogs.length === 0 ? (
-                  <div className="flex h-full flex-col items-center justify-center text-center">
-                    <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#5865f2]/20">
-                      <Hash className="h-8 w-8 text-[#5865f2]" />
-                    </div>
-                    <h3 className="text-xl font-bold text-foreground">
-                      歡迎來到 #{webhook.name}
-                    </h3>
-                    <p className="mt-2 text-sm text-muted-foreground">
-                      這是這個 Webhook 頻道的開始，在下方輸入訊息開始發送吧！
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {/* 載入更多指示器 */}
-                    {isLoadingMore && (
-                      <div className="flex items-center justify-center py-4">
-                        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-                        <span className="ml-2 text-sm text-muted-foreground">
-                          載入更多訊息...
-                        </span>
-                      </div>
-                    )}
-
-                    {/* 沒有更多訊息的提示 */}
-                    {!hasMore && messageLogs.length > 0 && (
-                      <div className="flex items-center justify-center py-4">
-                        <span className="text-xs text-muted-foreground">
-                          — 已顯示所有訊息 —
-                        </span>
-                      </div>
-                    )}
-
-                    {messageLogs.map((log) => (
-                      <div
-                        key={log.id}
-                        className="group flex gap-4 rounded px-2 py-1 hover:bg-[#2e3035]"
+          {/* 訊息區域 - 只在 messages tab 時顯示 */}
+          {activeTab === "messages" && (
+            <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+              {/* 訊息列表容器 - 使用 relative 讓按鈕可以絕對定位 */}
+              <div className="relative flex-1 overflow-hidden">
+                {/* 滾動到底部按鈕 - 固定在訊息列表下方中間 */}
+                {!isNearBottom && messageLogs.length > 0 && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        onClick={() => scrollToBottom(true)}
+                        size="icon"
+                        className="absolute bottom-4 left-1/2 z-10 h-9 w-9 -translate-x-1/2 rounded-full bg-[#2b2d31] shadow-lg hover:bg-[#3f4147]"
                       >
-                        {/* Bot 頭像 */}
-                        <div className="shrink-0">
-                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-discord-blurple">
-                            <FontAwesomeIcon
-                              icon={faDiscord}
-                              className="h-5 w-5 text-white"
-                            />
-                          </div>
+                        <ArrowDown className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>滾動到最新訊息</TooltipContent>
+                  </Tooltip>
+                )}
+
+                {/* 訊息列表區域 - Discord 風格 */}
+                <div
+                  ref={messageListRef}
+                  className="h-full overflow-y-auto px-4 py-4"
+                >
+                  {isLoadingLogs ? (
+                    <div className="flex h-full items-center justify-center">
+                      <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : messageLogs.length === 0 ? (
+                    <div className="flex h-full flex-col items-center justify-center text-center">
+                      <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#5865f2]/20">
+                        <Hash className="h-8 w-8 text-[#5865f2]" />
+                      </div>
+                      <h3 className="text-xl font-bold text-foreground">
+                        歡迎來到 #{webhook.name}
+                      </h3>
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        這是這個 Webhook 頻道的開始，在下方輸入訊息開始發送吧！
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {/* 載入更多指示器 */}
+                      {isLoadingMore && (
+                        <div className="flex items-center justify-center py-4">
+                          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                          <span className="ml-2 text-sm text-muted-foreground">
+                            載入更多訊息...
+                          </span>
                         </div>
+                      )}
 
-                        {/* 訊息內容區 */}
-                        <div className="min-w-0 flex-1">
-                          {/* 使用者名稱 + 時間 + 狀態 */}
-                          <div className="flex flex-wrap items-center gap-2">
-                            <span className="font-medium text-foreground">
-                              Webhook Bot
-                            </span>
-                            <span className="text-xs text-muted-foreground">
-                              {log.scheduledStatus === "pending" &&
-                              log.scheduledAt
-                                ? `預約於 ${formatTime(log.scheduledAt)}`
-                                : formatTime(log.sentAt)}
-                            </span>
-                            {/* 狀態標籤 */}
-                            {getStatusBadge(log)}
+                      {/* 沒有更多訊息的提示 */}
+                      {!hasMore && messageLogs.length > 0 && (
+                        <div className="flex items-center justify-center py-4">
+                          <span className="text-xs text-muted-foreground">
+                            — 已顯示所有訊息 —
+                          </span>
+                        </div>
+                      )}
+
+                      {messageLogs.map((log) => (
+                        <div
+                          key={log.id}
+                          className="group flex gap-4 rounded px-2 py-1 hover:bg-[#2e3035]"
+                        >
+                          {/* Bot 頭像 */}
+                          <div className="shrink-0">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-discord-blurple">
+                              <FontAwesomeIcon
+                                icon={faDiscord}
+                                className="h-5 w-5 text-white"
+                              />
+                            </div>
                           </div>
 
-                          {/* 訊息內容 */}
-                          <p className="mt-1 whitespace-pre-wrap text-sm wrap-break-word text-foreground/90">
-                            {log.content}
-                          </p>
+                          {/* 訊息內容區 */}
+                          <div className="min-w-0 flex-1">
+                            {/* 使用者名稱 + 時間 + 狀態 */}
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="font-medium text-foreground">
+                                Webhook Bot
+                              </span>
+                              <span className="text-xs text-muted-foreground">
+                                {log.scheduledStatus === "pending" &&
+                                log.scheduledAt
+                                  ? `預約於 ${formatTime(log.scheduledAt)}`
+                                  : formatTime(log.sentAt)}
+                              </span>
+                              {/* 狀態標籤 */}
+                              {getStatusBadge(log)}
+                            </div>
 
-                          {/* 錯誤訊息 */}
-                          {log.errorMessage && (
-                            <p className="mt-1 text-xs text-destructive">
-                              {log.errorMessage}
+                            {/* 訊息內容 */}
+                            <p className="mt-1 whitespace-pre-wrap text-sm wrap-break-word text-foreground/90">
+                              {log.content}
                             </p>
-                          )}
 
-                          {/* HTTP 狀態碼 */}
-                          {log.statusCode && log.status === "failed" && (
-                            <span className="mt-1 inline-block text-xs text-muted-foreground">
-                              HTTP {log.statusCode}
-                            </span>
-                          )}
-                        </div>
+                            {/* 錯誤訊息 */}
+                            {log.errorMessage && (
+                              <p className="mt-1 text-xs text-destructive">
+                                {log.errorMessage}
+                              </p>
+                            )}
 
-                        {/* 操作按鈕 - hover 時顯示 */}
-                        <div className="flex shrink-0 items-start gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-                          {/* 取消預約按鈕 */}
-                          {log.scheduledStatus === "pending" && (
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => handleCancelSchedule(log.id)}
-                                  className="h-7 w-7 text-muted-foreground hover:bg-[#3f4147] hover:text-destructive"
-                                >
-                                  <Ban className="h-4 w-4" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>取消預約</TooltipContent>
-                            </Tooltip>
-                          )}
+                            {/* HTTP 狀態碼 */}
+                            {log.statusCode && log.status === "failed" && (
+                              <span className="mt-1 inline-block text-xs text-muted-foreground">
+                                HTTP {log.statusCode}
+                              </span>
+                            )}
+                          </div>
 
-                          {/* 重新發送按鈕 */}
-                          {log.status === "failed" &&
-                            log.scheduledStatus !== "pending" &&
-                            webhook.isActive && (
+                          {/* 操作按鈕 - hover 時顯示 */}
+                          <div className="flex shrink-0 items-start gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                            {/* 取消預約按鈕 */}
+                            {log.scheduledStatus === "pending" && (
                               <Tooltip>
                                 <TooltipTrigger asChild>
                                   <Button
                                     variant="ghost"
                                     size="icon"
-                                    onClick={() =>
-                                      handleResendMessage(log.id, log.content)
-                                    }
-                                    disabled={isSending}
-                                    className="h-7 w-7 text-muted-foreground hover:bg-[#3f4147]"
+                                    onClick={() => handleCancelSchedule(log.id)}
+                                    className="h-7 w-7 text-muted-foreground hover:bg-[#3f4147] hover:text-destructive"
                                   >
-                                    <RefreshCw className="h-4 w-4" />
+                                    <Ban className="h-4 w-4" />
                                   </Button>
                                 </TooltipTrigger>
-                                <TooltipContent>重新發送</TooltipContent>
+                                <TooltipContent>取消預約</TooltipContent>
                               </Tooltip>
                             )}
+
+                            {/* 重新發送按鈕 */}
+                            {log.status === "failed" &&
+                              log.scheduledStatus !== "pending" &&
+                              webhook.isActive && (
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      onClick={() =>
+                                        handleResendMessage(log.id, log.content)
+                                      }
+                                      disabled={isSending}
+                                      className="h-7 w-7 text-muted-foreground hover:bg-[#3f4147]"
+                                    >
+                                      <RefreshCw className="h-4 w-4" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>重新發送</TooltipContent>
+                                </Tooltip>
+                              )}
+                          </div>
                         </div>
-                      </div>
-                    ))}
-                    {/* 用於自動滾動的參考點 */}
-                    <div ref={messagesEndRef} />
+                      ))}
+                      {/* 用於自動滾動的參考點 */}
+                      <div ref={messagesEndRef} />
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* 底部訊息輸入區 - Discord 風格 */}
+              <div className="shrink-0 border-t border-[#3f4147] bg-[#313338] px-4 py-4">
+                {!webhook.isActive ? (
+                  <div className="flex items-center justify-center rounded-lg bg-[#2b2d31] px-4 py-3">
+                    <p className="text-sm text-muted-foreground">
+                      Webhook 已停用，無法發送訊息
+                    </p>
                   </div>
+                ) : (
+                  <div className="flex items-end gap-2 rounded-lg bg-[#383a40] px-4 py-2">
+                    {/* 訊息輸入框 */}
+                    <Textarea
+                      placeholder={`傳送訊息至 #${webhook.name}`}
+                      value={messageContent}
+                      onChange={(e) => setMessageContent(e.target.value)}
+                      onKeyDown={(e) => {
+                        // 如果正在使用輸入法（例如中文輸入法選字中），不處理 Enter
+                        // isComposing 為 true 表示 IME 正在組字
+                        if (e.nativeEvent.isComposing) {
+                          return;
+                        }
+
+                        if (e.key === "Enter") {
+                          if (e.ctrlKey || e.metaKey) {
+                            // Cmd/Ctrl + Enter：插入換行
+                            e.preventDefault();
+                            setMessageContent((prev) => prev + "\n");
+                          } else if (!e.shiftKey) {
+                            // 單獨按 Enter：發送訊息
+                            e.preventDefault();
+                            handleSendMessage();
+                          }
+                          // Shift + Enter：保留預設行為（換行）
+                        }
+                      }}
+                      className="min-h-6 max-h-[200px] flex-1 resize-none border-0 bg-transparent p-0 text-sm placeholder:text-muted-foreground focus-visible:ring-0"
+                      disabled={isSending}
+                      rows={1}
+                    />
+
+                    {/* 預約發送按鈕 */}
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setScheduleDialogOpen(true)}
+                          disabled={!messageContent.trim() || isSending}
+                          className="h-8 w-8 shrink-0 text-muted-foreground hover:bg-[#4e5058] hover:text-foreground"
+                        >
+                          <Clock className="h-5 w-5" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>預約發送</TooltipContent>
+                    </Tooltip>
+
+                    {/* 發送按鈕 */}
+                    <Button
+                      onClick={handleSendMessage}
+                      disabled={!messageContent.trim() || isSending}
+                      size="icon"
+                      className="h-8 w-8 shrink-0 bg-discord-blurple text-white hover:bg-discord-blurple/80 disabled:opacity-50"
+                    >
+                      {isSending ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Send className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                )}
+
+                {/* 快捷鍵提示 */}
+                {webhook.isActive && (
+                  <p className="mt-2 text-center text-xs text-muted-foreground">
+                    <kbd className="rounded bg-[#232428] px-1.5 py-0.5">
+                      Enter
+                    </kbd>{" "}
+                    發送，{" "}
+                    <kbd className="rounded bg-[#232428] px-1.5 py-0.5">
+                      Shift
+                    </kbd>{" "}
+                    +{" "}
+                    <kbd className="rounded bg-[#232428] px-1.5 py-0.5">
+                      Enter
+                    </kbd>{" "}
+                    換行
+                  </p>
                 )}
               </div>
             </div>
+          )}
 
-            {/* 底部訊息輸入區 - Discord 風格 */}
-            <div className="shrink-0 border-t border-[#3f4147] bg-[#313338] px-4 py-4">
-              {!webhook.isActive ? (
-                <div className="flex items-center justify-center rounded-lg bg-[#2b2d31] px-4 py-3">
-                  <p className="text-sm text-muted-foreground">
-                    Webhook 已停用，無法發送訊息
-                  </p>
-                </div>
-              ) : (
-                <div className="flex items-end gap-2 rounded-lg bg-[#383a40] px-4 py-2">
-                  {/* 訊息輸入框 */}
-                  <Textarea
-                    placeholder={`傳送訊息至 #${webhook.name}`}
-                    value={messageContent}
-                    onChange={(e) => setMessageContent(e.target.value)}
-                    onKeyDown={(e) => {
-                      // 如果正在使用輸入法（例如中文輸入法選字中），不處理 Enter
-                      // isComposing 為 true 表示 IME 正在組字
-                      if (e.nativeEvent.isComposing) {
-                        return;
-                      }
-
-                      if (e.key === "Enter") {
-                        if (e.ctrlKey || e.metaKey) {
-                          // Cmd/Ctrl + Enter：插入換行
-                          e.preventDefault();
-                          setMessageContent((prev) => prev + "\n");
-                        } else if (!e.shiftKey) {
-                          // 單獨按 Enter：發送訊息
-                          e.preventDefault();
-                          handleSendMessage();
-                        }
-                        // Shift + Enter：保留預設行為（換行）
-                      }
-                    }}
-                    className="min-h-6 max-h-[200px] flex-1 resize-none border-0 bg-transparent p-0 text-sm placeholder:text-muted-foreground focus-visible:ring-0"
-                    disabled={isSending}
-                    rows={1}
-                  />
-
-                  {/* 預約發送按鈕 */}
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setScheduleDialogOpen(true)}
-                        disabled={!messageContent.trim() || isSending}
-                        className="h-8 w-8 shrink-0 text-muted-foreground hover:bg-[#4e5058] hover:text-foreground"
-                      >
-                        <Clock className="h-5 w-5" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>預約發送</TooltipContent>
-                  </Tooltip>
-
-                  {/* 發送按鈕 */}
-                  <Button
-                    onClick={handleSendMessage}
-                    disabled={!messageContent.trim() || isSending}
-                    size="icon"
-                    className="h-8 w-8 shrink-0 bg-discord-blurple text-white hover:bg-discord-blurple/80 disabled:opacity-50"
-                  >
-                    {isSending ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Send className="h-4 w-4" />
-                    )}
-                  </Button>
-                </div>
-              )}
-
-              {/* 快捷鍵提示 */}
-              {webhook.isActive && (
-                <p className="mt-2 text-center text-xs text-muted-foreground">
-                  <kbd className="rounded bg-[#232428] px-1.5 py-0.5">
-                    Enter
-                  </kbd>{" "}
-                  發送，{" "}
-                  <kbd className="rounded bg-[#232428] px-1.5 py-0.5">
-                    Shift
-                  </kbd>{" "}
-                  +{" "}
-                  <kbd className="rounded bg-[#232428] px-1.5 py-0.5">
-                    Enter
-                  </kbd>{" "}
-                  換行
-                </p>
-              )}
+          {/* 排程管理區域 - 只在 schedules tab 時顯示 */}
+          {activeTab === "schedules" && (
+            <div className="flex-1 overflow-y-auto p-4">
+              <WebhookScheduleList webhookId={webhook.id} />
             </div>
-          </div>
+          )}
 
           {/* 右側可收合資訊面板 - 使用 width transition 實現滑入/滑出動畫 */}
           <aside
