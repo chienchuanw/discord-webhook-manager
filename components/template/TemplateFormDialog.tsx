@@ -471,7 +471,7 @@ export function TemplateFormDialog({
                   {/* Author 設定 */}
                   <div className="space-y-4 rounded-lg bg-[#2b2d31] p-4">
                     <p className="text-xs font-medium tracking-wide text-[#949ba4]">
-                      Author
+                      作者
                     </p>
                     <div className="grid gap-4 md:grid-cols-3">
                       <div className="space-y-2">
@@ -538,7 +538,7 @@ export function TemplateFormDialog({
                   {/* Footer 設定 */}
                   <div className="space-y-4 rounded-lg bg-[#2b2d31] p-4">
                     <p className="text-xs font-medium tracking-wide text-[#949ba4]">
-                      Footer
+                      頁尾
                     </p>
                     <div className="grid gap-4 md:grid-cols-3">
                       <div className="space-y-2 md:col-span-2">
@@ -575,7 +575,7 @@ export function TemplateFormDialog({
                   <div className="space-y-4 rounded-lg bg-[#2b2d31] p-4">
                     <div className="flex items-center justify-between">
                       <p className="text-xs font-medium tracking-wide text-[#949ba4]">
-                        Fields
+                        欄位
                       </p>
                       <Button
                         type="button"
@@ -584,12 +584,12 @@ export function TemplateFormDialog({
                         onClick={addField}
                         className="h-8 border-[#5865f2] bg-transparent text-[#5865f2] hover:bg-[#5865f2]/10"
                       >
-                        + 新增 Field
+                        + 新增欄位
                       </Button>
                     </div>
                     {embedFields.length === 0 ? (
                       <p className="text-center text-sm text-[#6d6f78]">
-                        尚未新增任何 Field
+                        尚未新增任何欄位
                       </p>
                     ) : (
                       <div className="space-y-3">
@@ -597,7 +597,7 @@ export function TemplateFormDialog({
                           <div key={index} className="rounded bg-[#1e1f22] p-3">
                             <div className="mb-2 flex items-center justify-between">
                               <span className="text-xs text-[#949ba4]">
-                                Field {index + 1}
+                                欄位 {index + 1}
                               </span>
                               <Button
                                 type="button"
