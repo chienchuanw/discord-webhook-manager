@@ -20,7 +20,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { EmbedPreview } from "@/components/template/EmbedPreview";
 import { ScheduleType, type EmbedData } from "@/types/template";
@@ -181,103 +180,137 @@ export function WebhookScheduleFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] max-w-4xl border-[#1e1f22] bg-[#313338] p-0 text-white">
-        <DialogHeader className="border-b border-[#1e1f22] p-4">
-          <DialogTitle className="text-white">{title}</DialogTitle>
-          <DialogDescription className="text-[#b5bac1]">
+      {/* Discord 風格：加寬 Dialog、圓角、陰影 */}
+      {/* 注意：使用 sm:max-w-6xl 覆蓋 ui/dialog.tsx 中的 sm:max-w-lg 基礎樣式 */}
+      <DialogContent className="max-h-[90vh] max-w-6xl overflow-hidden rounded-lg border-none bg-[#313338] p-0 text-white shadow-2xl sm:max-w-6xl">
+        {/* Header 區塊 - Discord 風格的簡潔標題 */}
+        <DialogHeader className="bg-[#2b2d31] px-6 py-4">
+          <DialogTitle className="text-xl font-semibold text-white">
+            {title}
+          </DialogTitle>
+          <DialogDescription className="text-sm text-[#949ba4]">
             {description}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit}>
-          <div className="flex max-h-[60vh]">
-            {/* 左側：表單 */}
-            <ScrollArea className="flex-1 border-r border-[#1e1f22]">
-              <div className="space-y-4 p-4">
-                {/* 排程名稱 */}
-                <div className="space-y-2">
-                  <Label htmlFor="name" className="text-[#b5bac1]">
-                    排程名稱 *
-                  </Label>
-                  <Input
-                    id="name"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="例如：每日公告"
-                    required
-                    className="border-[#1e1f22] bg-[#1e1f22] text-white placeholder:text-[#6d6f78]"
-                  />
-                </div>
-
-                <Separator className="bg-[#1e1f22]" />
-
-                {/* 訊息內容 */}
-                <div className="space-y-3">
-                  <h3 className="text-sm font-medium text-[#b5bac1]">
-                    訊息內容
+          <div className="flex max-h-[70vh]">
+            {/* 左側：表單區 - 增加間距與更好的視覺層次 */}
+            <ScrollArea className="flex-1">
+              <div className="space-y-6 p-6">
+                {/* 基本資訊區 */}
+                <div className="space-y-4">
+                  <h3 className="text-xs font-bold uppercase tracking-wide text-[#b5bac1]">
+                    基本資訊
                   </h3>
-                  <div className="space-y-2">
-                    <Label htmlFor="content" className="text-[#b5bac1]">
-                      純文字訊息
-                    </Label>
-                    <Textarea
-                      id="content"
-                      value={messageContent}
-                      onChange={(e) => setMessageContent(e.target.value)}
-                      placeholder="在 Embed 之前顯示的純文字"
-                      rows={3}
-                      className="border-[#1e1f22] bg-[#1e1f22] text-white placeholder:text-[#6d6f78]"
-                    />
+                  <div className="space-y-4 rounded-lg bg-[#2b2d31] p-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="name" className="text-sm text-[#b5bac1]">
+                        排程名稱 <span className="text-[#ed4245]">*</span>
+                      </Label>
+                      <Input
+                        id="name"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        placeholder="例如：每日公告"
+                        required
+                        className="h-11 rounded-lg border-none bg-[#1e1f22] text-white placeholder:text-[#6d6f78] focus-visible:ring-1 focus-visible:ring-[#5865f2]"
+                      />
+                    </div>
                   </div>
                 </div>
 
-                <Separator className="bg-[#1e1f22]" />
-
-                {/* Embed 設定 */}
-                <div className="space-y-3">
-                  <h3 className="text-sm font-medium text-[#b5bac1]">
-                    Embed 設定
+                {/* 訊息內容區 */}
+                <div className="space-y-4">
+                  <h3 className="text-xs font-bold uppercase tracking-wide text-[#b5bac1]">
+                    訊息內容
                   </h3>
-                  <div className="grid gap-3">
+                  <div className="space-y-4 rounded-lg bg-[#2b2d31] p-4">
                     <div className="space-y-2">
-                      <Label htmlFor="embedTitle" className="text-[#b5bac1]">
-                        標題
+                      <Label
+                        htmlFor="content"
+                        className="text-sm text-[#b5bac1]"
+                      >
+                        純文字訊息
                       </Label>
-                      <Input
-                        id="embedTitle"
-                        value={embedTitle}
-                        onChange={(e) => setEmbedTitle(e.target.value)}
-                        placeholder="Embed 標題"
-                        className="border-[#1e1f22] bg-[#1e1f22] text-white placeholder:text-[#6d6f78]"
+                      <Textarea
+                        id="content"
+                        value={messageContent}
+                        onChange={(e) => setMessageContent(e.target.value)}
+                        placeholder="在 Embed 之前顯示的純文字"
+                        rows={3}
+                        className="resize-none rounded-lg border-none bg-[#1e1f22] text-white placeholder:text-[#6d6f78] focus-visible:ring-1 focus-visible:ring-[#5865f2]"
                       />
                     </div>
+                  </div>
+                </div>
+
+                {/* Embed 設定區 */}
+                <div className="space-y-4">
+                  <h3 className="text-xs font-bold uppercase tracking-wide text-[#b5bac1]">
+                    Embed 設定
+                  </h3>
+                  <div className="space-y-4 rounded-lg bg-[#2b2d31] p-4">
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label
+                          htmlFor="embedTitle"
+                          className="text-sm text-[#b5bac1]"
+                        >
+                          標題
+                        </Label>
+                        <Input
+                          id="embedTitle"
+                          value={embedTitle}
+                          onChange={(e) => setEmbedTitle(e.target.value)}
+                          placeholder="Embed 標題"
+                          className="h-10 rounded border-none bg-[#1e1f22] text-white placeholder:text-[#6d6f78] focus-visible:ring-1 focus-visible:ring-[#5865f2]"
+                        />
+                      </div>
+                      <div className="flex items-end gap-3">
+                        <div className="space-y-2">
+                          <Label
+                            htmlFor="embedColor"
+                            className="text-sm text-[#b5bac1]"
+                          >
+                            顏色
+                          </Label>
+                          <div className="flex items-center gap-2">
+                            <Input
+                              id="embedColor"
+                              type="color"
+                              value={embedColor}
+                              onChange={(e) => setEmbedColor(e.target.value)}
+                              className="h-10 w-14 cursor-pointer rounded border-none bg-[#1e1f22] p-1"
+                            />
+                            <span className="text-sm text-[#949ba4]">
+                              {embedColor.toUpperCase()}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                     <div className="space-y-2">
-                      <Label htmlFor="embedDesc" className="text-[#b5bac1]">
+                      <Label
+                        htmlFor="embedDesc"
+                        className="text-sm text-[#b5bac1]"
+                      >
                         內容
                       </Label>
                       <Textarea
                         id="embedDesc"
                         value={embedDescription}
                         onChange={(e) => setEmbedDescription(e.target.value)}
-                        placeholder="Embed 內容"
+                        placeholder="Embed 內容（支援 Markdown）"
                         rows={3}
-                        className="border-[#1e1f22] bg-[#1e1f22] text-white placeholder:text-[#6d6f78]"
-                      />
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <Label htmlFor="embedColor" className="text-[#b5bac1]">
-                        顏色
-                      </Label>
-                      <Input
-                        id="embedColor"
-                        type="color"
-                        value={embedColor}
-                        onChange={(e) => setEmbedColor(e.target.value)}
-                        className="h-8 w-16 cursor-pointer border-[#1e1f22] bg-[#1e1f22] p-0"
+                        className="resize-none rounded border-none bg-[#1e1f22] text-white placeholder:text-[#6d6f78] focus-visible:ring-1 focus-visible:ring-[#5865f2]"
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="imageUrl" className="text-[#b5bac1]">
+                      <Label
+                        htmlFor="imageUrl"
+                        className="text-sm text-[#b5bac1]"
+                      >
                         圖片 URL
                       </Label>
                       <Input
@@ -285,95 +318,97 @@ export function WebhookScheduleFormDialog({
                         value={imageUrl}
                         onChange={(e) => setImageUrl(e.target.value)}
                         placeholder="https://example.com/image.png"
-                        className="border-[#1e1f22] bg-[#1e1f22] text-white placeholder:text-[#6d6f78]"
+                        className="h-10 rounded border-none bg-[#1e1f22] text-white placeholder:text-[#6d6f78] focus-visible:ring-1 focus-visible:ring-[#5865f2]"
                       />
                     </div>
                   </div>
                 </div>
 
-                <Separator className="bg-[#1e1f22]" />
-
-                {/* 排程設定 */}
-                <div className="space-y-3">
-                  <h3 className="text-sm font-medium text-[#b5bac1]">
+                {/* 排程設定區 */}
+                <div className="space-y-4">
+                  <h3 className="text-xs font-bold uppercase tracking-wide text-[#b5bac1]">
                     排程設定
                   </h3>
-                  <div className="grid gap-3">
-                    <div className="space-y-2">
-                      <Label className="text-[#b5bac1]">排程類型</Label>
-                      <Select
-                        value={scheduleType}
-                        onValueChange={(v) =>
-                          setScheduleType(v as ScheduleType)
-                        }
-                      >
-                        <SelectTrigger className="border-[#1e1f22] bg-[#1e1f22] text-white">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent className="border-[#1e1f22] bg-[#2b2d31]">
-                          <SelectItem value={ScheduleType.INTERVAL}>
-                            固定間隔
-                          </SelectItem>
-                          <SelectItem value={ScheduleType.DAILY}>
-                            每天
-                          </SelectItem>
-                          <SelectItem value={ScheduleType.WEEKLY}>
-                            每週
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    {scheduleType === ScheduleType.INTERVAL && (
+                  <div className="space-y-4 rounded-lg bg-[#2b2d31] p-4">
+                    <div className="grid gap-4 md:grid-cols-2">
                       <div className="space-y-2">
-                        <Label className="text-[#b5bac1]">間隔分鐘</Label>
-                        <Input
-                          type="number"
-                          min={1}
-                          value={intervalMinutes}
-                          onChange={(e) =>
-                            setIntervalMinutes(Number(e.target.value))
+                        <Label className="text-sm text-[#b5bac1]">
+                          排程類型
+                        </Label>
+                        <Select
+                          value={scheduleType}
+                          onValueChange={(v) =>
+                            setScheduleType(v as ScheduleType)
                           }
-                          className="border-[#1e1f22] bg-[#1e1f22] text-white"
-                        />
+                        >
+                          <SelectTrigger className="h-10 rounded border-none bg-[#1e1f22] text-white focus:ring-1 focus:ring-[#5865f2]">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="border-none bg-[#1e1f22]">
+                            <SelectItem value={ScheduleType.INTERVAL}>
+                              固定間隔
+                            </SelectItem>
+                            <SelectItem value={ScheduleType.DAILY}>
+                              每天
+                            </SelectItem>
+                            <SelectItem value={ScheduleType.WEEKLY}>
+                              每週
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
-                    )}
 
-                    {scheduleType !== ScheduleType.INTERVAL && (
-                      <div className="space-y-2">
-                        <Label className="text-[#b5bac1]">發送時間</Label>
-                        <Input
-                          type="time"
-                          value={scheduleTime}
-                          onChange={(e) => setScheduleTime(e.target.value)}
-                          className="border-[#1e1f22] bg-[#1e1f22] text-white"
-                        />
-                      </div>
-                    )}
+                      {scheduleType === ScheduleType.INTERVAL && (
+                        <div className="space-y-2">
+                          <Label className="text-sm text-[#b5bac1]">
+                            間隔分鐘
+                          </Label>
+                          <Input
+                            type="number"
+                            min={1}
+                            value={intervalMinutes}
+                            onChange={(e) =>
+                              setIntervalMinutes(Number(e.target.value))
+                            }
+                            className="h-10 rounded border-none bg-[#1e1f22] text-white focus-visible:ring-1 focus-visible:ring-[#5865f2]"
+                          />
+                        </div>
+                      )}
+
+                      {scheduleType !== ScheduleType.INTERVAL && (
+                        <div className="space-y-2">
+                          <Label className="text-sm text-[#b5bac1]">
+                            發送時間
+                          </Label>
+                          <Input
+                            type="time"
+                            value={scheduleTime}
+                            onChange={(e) => setScheduleTime(e.target.value)}
+                            className="h-10 rounded border-none bg-[#1e1f22] text-white focus-visible:ring-1 focus-visible:ring-[#5865f2]"
+                          />
+                        </div>
+                      )}
+                    </div>
 
                     {scheduleType === ScheduleType.WEEKLY && (
                       <div className="space-y-2">
-                        <Label className="text-[#b5bac1]">發送日期</Label>
+                        <Label className="text-sm text-[#b5bac1]">
+                          發送日期
+                        </Label>
                         <div className="flex flex-wrap gap-2">
                           {WEEKDAYS.map((day) => (
-                            <Button
+                            <button
                               key={day.value}
                               type="button"
-                              size="sm"
-                              variant={
-                                scheduleDays.includes(day.value)
-                                  ? "default"
-                                  : "outline"
-                              }
                               onClick={() => toggleDay(day.value)}
-                              className={
+                              className={`flex h-9 w-9 items-center justify-center rounded-full text-sm font-medium transition-colors ${
                                 scheduleDays.includes(day.value)
-                                  ? "bg-[#5865f2] hover:bg-[#4752c4]"
-                                  : "border-[#1e1f22] bg-transparent text-[#b5bac1]"
-                              }
+                                  ? "bg-[#5865f2] text-white"
+                                  : "bg-[#1e1f22] text-[#b5bac1] hover:bg-[#404249]"
+                              }`}
                             >
                               {day.label}
-                            </Button>
+                            </button>
                           ))}
                         </div>
                       </div>
@@ -383,34 +418,43 @@ export function WebhookScheduleFormDialog({
               </div>
             </ScrollArea>
 
-            {/* 右側：預覽 */}
-            <div className="w-80 shrink-0 p-4">
-              <h3 className="mb-3 text-sm font-medium text-[#b5bac1]">
-                即時預覽
-              </h3>
-              <EmbedPreview
-                messageContent={messageContent}
-                embedData={buildEmbedData()}
-                imageUrl={imageUrl}
-              />
+            {/* 右側：預覽區 - Discord 風格 */}
+            <div className="w-[420px] shrink-0 bg-[#2b2d31] p-4">
+              <div className="flex items-center gap-2">
+                <div className="h-2 w-2 rounded-full bg-[#3ba55c]" />
+                <h3 className="text-xs font-bold uppercase tracking-wide text-[#b5bac1]">
+                  即時預覽
+                </h3>
+              </div>
+              <div className="mt-3 rounded-lg bg-[#313338] p-3">
+                <EmbedPreview
+                  messageContent={messageContent}
+                  embedData={buildEmbedData()}
+                  imageUrl={imageUrl}
+                />
+              </div>
             </div>
           </div>
 
-          <DialogFooter className="border-t border-[#1e1f22] p-4">
-            <Button
+          {/* 底部按鈕區 - Discord 風格 */}
+          <DialogFooter className="bg-[#2b2d31] px-6 py-4">
+            <button
               type="button"
-              variant="ghost"
               onClick={() => onOpenChange(false)}
-              className="text-white hover:bg-[#4e5058]"
+              className="text-sm font-medium text-white hover:underline"
             >
               取消
-            </Button>
+            </button>
             <Button
               type="submit"
               disabled={isSubmitting || !name}
-              className="bg-[#5865f2] text-white hover:bg-[#4752c4]"
+              className="bg-[#5865f2] px-6 text-white hover:bg-[#4752c4]"
             >
-              {isSubmitting ? "處理中..." : initialData ? "儲存" : "建立"}
+              {isSubmitting
+                ? "處理中..."
+                : initialData
+                ? "儲存變更"
+                : "建立排程"}
             </Button>
           </DialogFooter>
         </form>
