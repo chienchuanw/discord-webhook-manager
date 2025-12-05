@@ -2,14 +2,21 @@
  * Local Cron Service
  * 在開發環境中模擬 Vercel Cron Jobs
  *
- * 使用 node-cron 套件每分鐘執行一次排程處理
+ * 使用 node-cron 套件定期執行排程處理
  * 僅在 NODE_ENV === 'development' 時啟用
+ *
+ * 環境變數：
+ * - CRON_SCHEDULE: cron 表達式，預設每分鐘執行
+ *   範例請參考 .env.local 檔案
  */
 
 import cron from "node-cron";
 
 // 追蹤是否已啟動，避免重複啟動
 let isStarted = false;
+
+// 預設 cron 表達式：每分鐘執行
+const DEFAULT_CRON_SCHEDULE = "* * * * *";
 
 /**
  * 取得基礎 URL
@@ -106,7 +113,7 @@ async function runAllCronTasks(): Promise<void> {
 
 /**
  * 啟動本機 cron 服務
- * 每分鐘執行一次排程處理與預約訊息發送
+ * 根據 CRON_SCHEDULE 環境變數設定的頻率執行排程處理
  */
 export function startLocalCron(): void {
   // 避免重複啟動（Next.js 開發模式可能多次載入）
@@ -114,11 +121,25 @@ export function startLocalCron(): void {
     return;
   }
 
-  isStarted = true;
-  console.log("[Local Cron] 開發環境 cron 服務已啟動，每分鐘檢查排程...");
+  // 從環境變數讀取 cron 表達式，預設每分鐘執行
+  const cronSchedule = process.env.CRON_SCHEDULE || DEFAULT_CRON_SCHEDULE;
 
-  // 每分鐘執行一次（與 Vercel Cron 相同頻率）
-  cron.schedule("* * * * *", () => {
+  // 驗證 cron 表達式是否有效
+  if (!cron.validate(cronSchedule)) {
+    console.error(
+      `[Local Cron] 無效的 CRON_SCHEDULE: "${cronSchedule}"，使用預設值 "${DEFAULT_CRON_SCHEDULE}"`
+    );
+  }
+
+  const validSchedule = cron.validate(cronSchedule)
+    ? cronSchedule
+    : DEFAULT_CRON_SCHEDULE;
+
+  isStarted = true;
+  console.log(`[Local Cron] 開發環境 cron 服務已啟動，排程: ${validSchedule}`);
+
+  // 根據環境變數設定的頻率執行
+  cron.schedule(validSchedule, () => {
     runAllCronTasks();
   });
 
