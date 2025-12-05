@@ -21,17 +21,15 @@ type RouteContext = {
  * GET /api/templates/[id]
  * 取得指定的樣板
  */
-export async function GET(request: Request, context: RouteContext) {
+
+export async function GET(_request: Request, context: RouteContext) {
   try {
     const { id } = await context.params;
     const em = await getEntityManager();
     const template = await getTemplateById(em, id);
 
     if (!template) {
-      return NextResponse.json(
-        { error: "找不到指定的樣板" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "找不到指定的樣板" }, { status: 404 });
     }
 
     return NextResponse.json(template, { status: 200 });
@@ -81,10 +79,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     const template = await updateTemplate(em, id, params);
 
     if (!template) {
-      return NextResponse.json(
-        { error: "找不到指定的樣板" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "找不到指定的樣板" }, { status: 404 });
     }
 
     return NextResponse.json(template, { status: 200 });
@@ -98,17 +93,15 @@ export async function PATCH(request: Request, context: RouteContext) {
  * DELETE /api/templates/[id]
  * 刪除指定的樣板
  */
-export async function DELETE(request: Request, context: RouteContext) {
+
+export async function DELETE(_request: Request, context: RouteContext) {
   try {
     const { id } = await context.params;
     const em = await getEntityManager();
     const success = await deleteTemplate(em, id);
 
     if (!success) {
-      return NextResponse.json(
-        { error: "找不到指定的樣板" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "找不到指定的樣板" }, { status: 404 });
     }
 
     // 204 No Content - 成功刪除但不回傳內容
@@ -118,4 +111,3 @@ export async function DELETE(request: Request, context: RouteContext) {
     return NextResponse.json({ error: "刪除樣板失敗" }, { status: 500 });
   }
 }
-
