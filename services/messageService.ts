@@ -39,6 +39,17 @@ export interface SendMessageResult {
   messageLog?: MessageLog;
 }
 
+/**
+ * 發送含圖片訊息的參數
+ * content 和 file 至少需要一個
+ */
+export interface SendMessageWithImageParams {
+  webhookId: string;
+  content?: string; // 文字內容（可選）
+  file?: File | Blob; // 圖片檔案（可選）
+  fileName?: string; // 檔案名稱（可選，預設為 image.png）
+}
+
 /* ============================================
    訊息記錄操作函式
    ============================================ */
@@ -210,6 +221,123 @@ export async function sendMessage(
     const messageLog = await createMessageLog(em, {
       webhook,
       content,
+      status: MessageStatus.FAILED,
+      errorMessage,
+    });
+
+    // 更新失敗計數
+    webhook.failCount += 1;
+    await em.persistAndFlush(webhook);
+
+    return {
+      success: false,
+      error: errorMessage,
+      messageLog,
+    };
+  }
+}
+
+/**
+ * 發送含圖片的訊息到 Discord Webhook
+ * 使用 FormData 格式發送，支援圖片上傳
+ *
+ * @param em EntityManager 實例
+ * @param params 發送參數（content 和 file 至少需要一個）
+ * @returns 發送結果
+ */
+export async function sendMessageWithImage(
+  em: EntityManager,
+  params: SendMessageWithImageParams
+): Promise<SendMessageResult> {
+  const { webhookId, content, file, fileName } = params;
+
+  // 驗證：content 和 file 至少需要一個
+  if (!content?.trim() && !file) {
+    return { success: false, error: "訊息內容或圖片至少需要一個" };
+  }
+
+  // 取得 Webhook
+  let webhook: Webhook | null;
+  try {
+    webhook = await em.findOne(Webhook, { id: webhookId });
+  } catch {
+    return { success: false, error: "Webhook 不存在" };
+  }
+
+  if (!webhook) {
+    return { success: false, error: "Webhook 不存在" };
+  }
+
+  // 檢查 Webhook 是否啟用
+  if (!webhook.isActive) {
+    return { success: false, error: "Webhook 已停用" };
+  }
+
+  // 建立 FormData
+  const formData = new FormData();
+  if (content?.trim()) {
+    formData.append("content", content.trim());
+  }
+  if (file) {
+    // 使用提供的檔名或預設為 image.png
+    formData.append("file", file, fileName || "image.png");
+  }
+
+  // 發送訊息到 Discord（使用 FormData，不設定 Content-Type）
+  try {
+    const response = await fetch(webhook.url, {
+      method: "POST",
+      body: formData,
+    });
+
+    const statusCode = response.status;
+    const isSuccess = response.ok;
+
+    // 建立訊息記錄（使用文字內容或標記有圖片）
+    let errorMessage: string | undefined;
+    if (!isSuccess) {
+      try {
+        const errorData = await response.json();
+        errorMessage = JSON.stringify(errorData);
+      } catch {
+        errorMessage = `HTTP ${statusCode}`;
+      }
+    }
+
+    // 記錄內容：優先使用文字內容，若無則標記為 [圖片]
+    const logContent = content?.trim() || "[圖片]";
+
+    const messageLog = await createMessageLog(em, {
+      webhook,
+      content: logContent,
+      status: isSuccess ? MessageStatus.SUCCESS : MessageStatus.FAILED,
+      statusCode,
+      errorMessage,
+    });
+
+    // 更新 Webhook 統計資料
+    if (isSuccess) {
+      webhook.successCount += 1;
+      webhook.lastUsed = new Date();
+    } else {
+      webhook.failCount += 1;
+    }
+    await em.persistAndFlush(webhook);
+
+    return {
+      success: isSuccess,
+      statusCode,
+      error: errorMessage,
+      messageLog,
+    };
+  } catch (error) {
+    // 網路錯誤或其他例外
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const logContent = content?.trim() || "[圖片]";
+
+    const messageLog = await createMessageLog(em, {
+      webhook,
+      content: logContent,
       status: MessageStatus.FAILED,
       errorMessage,
     });

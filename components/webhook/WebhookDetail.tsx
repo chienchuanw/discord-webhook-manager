@@ -14,6 +14,7 @@ import {
   Info,
   X,
   ArrowDown,
+  ImagePlus,
 } from "lucide-react";
 
 import { faDiscord } from "@fortawesome/free-brands-svg-icons";
@@ -97,8 +98,14 @@ export function WebhookDetail({
     "messages"
   );
 
+  // 圖片上傳相關 state
+  const [selectedImage, setSelectedImage] = React.useState<File | null>(null);
+  const [imagePreview, setImagePreview] = React.useState<string | null>(null);
+
   // 訊息列表容器的 ref，用於偵測滾動
   const messageListRef = React.useRef<HTMLDivElement>(null);
+  // 圖片上傳 input 的 ref
+  const imageInputRef = React.useRef<HTMLInputElement>(null);
 
   // 載入最新的訊息歷史記錄（重置分頁）
   const fetchMessageLogs = React.useCallback(async () => {
@@ -183,18 +190,55 @@ export function WebhookDetail({
     return () => container.removeEventListener("scroll", handleScroll);
   }, [hasMore, isLoadingMore, fetchMoreMessages]);
 
-  // 發送訊息（使用樂觀更新）
+  // 處理圖片選擇
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // 驗證檔案類型
+    if (!file.type.startsWith("image/")) {
+      alert("請選擇圖片檔案");
+      return;
+    }
+
+    // 驗證檔案大小（Discord 限制 8MB）
+    if (file.size > 8 * 1024 * 1024) {
+      alert("圖片大小不能超過 8MB");
+      return;
+    }
+
+    setSelectedImage(file);
+    // 建立預覽 URL
+    setImagePreview(URL.createObjectURL(file));
+  };
+
+  // 移除已選擇的圖片
+  const handleRemoveImage = () => {
+    setSelectedImage(null);
+    if (imagePreview) {
+      URL.revokeObjectURL(imagePreview);
+      setImagePreview(null);
+    }
+    // 重置 input
+    if (imageInputRef.current) {
+      imageInputRef.current.value = "";
+    }
+  };
+
+  // 發送訊息（使用樂觀更新，支援圖片）
   const handleSendMessage = async () => {
-    if (!messageContent.trim() || isSending) return;
+    // 必須有文字或圖片才能發送
+    if ((!messageContent.trim() && !selectedImage) || isSending) return;
 
     const content = messageContent.trim();
+    const hasImage = !!selectedImage;
     // 生成臨時 ID，用於識別樂觀更新的訊息
     const tempId = `temp-${Date.now()}`;
 
     // 建立樂觀更新的訊息物件（顯示為「發送中」狀態）
     const optimisticMessage: MessageLogItem = {
       id: tempId,
-      content,
+      content: content || (hasImage ? "[圖片]" : ""),
       status: "pending",
       sentAt: new Date().toISOString(),
     };
@@ -202,18 +246,38 @@ export function WebhookDetail({
     // 立即將訊息加入列表底部，並清空輸入框
     setMessageLogs((prev) => [...prev, optimisticMessage]);
     setMessageContent("");
+    // 清除圖片預覽
+    const imageToSend = selectedImage;
+    handleRemoveImage();
     setIsSending(true);
 
     try {
-      const response = await fetch(`/api/webhooks/${webhook.id}/send`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content }),
-      });
+      let response: Response;
+
+      if (imageToSend) {
+        // 使用 FormData 發送（含圖片）
+        const formData = new FormData();
+        if (content) {
+          formData.append("content", content);
+        }
+        formData.append("file", imageToSend, imageToSend.name);
+
+        response = await fetch(`/api/webhooks/${webhook.id}/send-with-image`, {
+          method: "POST",
+          body: formData,
+        });
+      } else {
+        // 純文字發送
+        response = await fetch(`/api/webhooks/${webhook.id}/send`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ content }),
+        });
+      }
 
       const data = await response.json();
 
-      if (response.ok) {
+      if (response.ok && data.success) {
         // 發送成功：用伺服器回傳的真實資料替換樂觀更新的訊息
         setMessageLogs((prev) =>
           prev.map((msg) =>
@@ -698,66 +762,114 @@ export function WebhookDetail({
                     </p>
                   </div>
                 ) : (
-                  <div className="flex items-end gap-2 rounded-lg bg-[#383a40] px-4 py-2">
-                    {/* 訊息輸入框 */}
-                    <Textarea
-                      placeholder={`傳送訊息至 #${webhook.name}`}
-                      value={messageContent}
-                      onChange={(e) => setMessageContent(e.target.value)}
-                      onKeyDown={(e) => {
-                        // 如果正在使用輸入法（例如中文輸入法選字中），不處理 Enter
-                        // isComposing 為 true 表示 IME 正在組字
-                        if (e.nativeEvent.isComposing) {
-                          return;
-                        }
-
-                        if (e.key === "Enter") {
-                          if (e.ctrlKey || e.metaKey) {
-                            // Cmd/Ctrl + Enter：插入換行
-                            e.preventDefault();
-                            setMessageContent((prev) => prev + "\n");
-                          } else if (!e.shiftKey) {
-                            // 單獨按 Enter：發送訊息
-                            e.preventDefault();
-                            handleSendMessage();
-                          }
-                          // Shift + Enter：保留預設行為（換行）
-                        }
-                      }}
-                      className="min-h-6 max-h-[200px] flex-1 resize-none border-0 bg-transparent p-0 text-sm placeholder:text-muted-foreground focus-visible:ring-0"
-                      disabled={isSending}
-                      rows={1}
-                    />
-
-                    {/* 預約發送按鈕 */}
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => setScheduleDialogOpen(true)}
-                          disabled={!messageContent.trim() || isSending}
-                          className="h-8 w-8 shrink-0 text-muted-foreground hover:bg-[#4e5058] hover:text-foreground"
+                  <div className="space-y-2">
+                    {/* 圖片預覽區域 */}
+                    {imagePreview && (
+                      <div className="relative inline-block rounded-lg bg-[#2b2d31] p-2">
+                        <img
+                          src={imagePreview}
+                          alt="預覽圖片"
+                          className="max-h-32 max-w-48 rounded object-contain"
+                        />
+                        <button
+                          onClick={handleRemoveImage}
+                          className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-white hover:bg-red-600"
+                          title="移除圖片"
                         >
-                          <Clock className="h-5 w-5" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>預約發送</TooltipContent>
-                    </Tooltip>
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    )}
 
-                    {/* 發送按鈕 */}
-                    <Button
-                      onClick={handleSendMessage}
-                      disabled={!messageContent.trim() || isSending}
-                      size="icon"
-                      className="h-8 w-8 shrink-0 bg-discord-blurple text-white hover:bg-discord-blurple/80 disabled:opacity-50"
-                    >
-                      {isSending ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Send className="h-4 w-4" />
-                      )}
-                    </Button>
+                    <div className="flex items-end gap-2 rounded-lg bg-[#383a40] px-4 py-2">
+                      {/* 隱藏的圖片上傳 input */}
+                      <input
+                        ref={imageInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageSelect}
+                        className="hidden"
+                      />
+
+                      {/* 圖片上傳按鈕 */}
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => imageInputRef.current?.click()}
+                            disabled={isSending}
+                            className="h-8 w-8 shrink-0 text-muted-foreground hover:bg-[#4e5058] hover:text-foreground"
+                          >
+                            <ImagePlus className="h-5 w-5" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>上傳圖片</TooltipContent>
+                      </Tooltip>
+
+                      {/* 訊息輸入框 */}
+                      <Textarea
+                        placeholder={`傳送訊息至 #${webhook.name}`}
+                        value={messageContent}
+                        onChange={(e) => setMessageContent(e.target.value)}
+                        onKeyDown={(e) => {
+                          // 如果正在使用輸入法（例如中文輸入法選字中），不處理 Enter
+                          // isComposing 為 true 表示 IME 正在組字
+                          if (e.nativeEvent.isComposing) {
+                            return;
+                          }
+
+                          if (e.key === "Enter") {
+                            if (e.ctrlKey || e.metaKey) {
+                              // Cmd/Ctrl + Enter：插入換行
+                              e.preventDefault();
+                              setMessageContent((prev) => prev + "\n");
+                            } else if (!e.shiftKey) {
+                              // 單獨按 Enter：發送訊息
+                              e.preventDefault();
+                              handleSendMessage();
+                            }
+                            // Shift + Enter：保留預設行為（換行）
+                          }
+                        }}
+                        className="min-h-6 max-h-[200px] flex-1 resize-none border-0 bg-transparent p-0 text-sm placeholder:text-muted-foreground focus-visible:ring-0"
+                        disabled={isSending}
+                        rows={1}
+                      />
+
+                      {/* 預約發送按鈕 */}
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setScheduleDialogOpen(true)}
+                            disabled={!messageContent.trim() || isSending}
+                            className="h-8 w-8 shrink-0 text-muted-foreground hover:bg-[#4e5058] hover:text-foreground"
+                          >
+                            <Clock className="h-5 w-5" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>預約發送</TooltipContent>
+                      </Tooltip>
+
+                      {/* 發送按鈕 */}
+                      <Button
+                        onClick={handleSendMessage}
+                        disabled={
+                          (!messageContent.trim() && !selectedImage) ||
+                          isSending
+                        }
+                        size="icon"
+                        className="h-8 w-8 shrink-0 bg-discord-blurple text-white hover:bg-discord-blurple/80 disabled:opacity-50"
+                      >
+                        {isSending ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Send className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </div>
                   </div>
                 )}
 

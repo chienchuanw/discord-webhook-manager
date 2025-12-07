@@ -18,10 +18,12 @@ import { MessageLog, MessageStatus } from "../db/entities/MessageLog";
 import { WebhookSchedule } from "../db/entities/WebhookSchedule";
 import {
   sendMessage,
+  sendMessageWithImage,
   getMessageLogs,
   createMessageLog,
   type SendMessageParams,
   type SendMessageResult,
+  type SendMessageWithImageParams,
 } from "./messageService";
 
 describe("messageService", () => {
@@ -310,6 +312,197 @@ describe("messageService", () => {
 
       const updatedWebhook = await em.findOne(Webhook, { id: testWebhook.id });
       expect(updatedWebhook?.failCount).toBe(1);
+    });
+  });
+
+  /* ============================================
+     sendMessageWithImage 測試
+     ============================================ */
+  describe("sendMessageWithImage", () => {
+    beforeEach(() => {
+      // 重置所有 mock
+      vi.restoreAllMocks();
+    });
+
+    /**
+     * 建立測試用的 Blob 物件（模擬圖片檔案）
+     */
+    function createTestImageBlob(): Blob {
+      // 建立一個簡單的 1x1 PNG 圖片的 binary data
+      const pngData = new Uint8Array([
+        0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d,
+        0x49, 0x48, 0x44, 0x52, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01,
+        0x08, 0x06, 0x00, 0x00, 0x00, 0x1f, 0x15, 0xc4, 0x89, 0x00, 0x00, 0x00,
+        0x0a, 0x49, 0x44, 0x41, 0x54, 0x78, 0x9c, 0x63, 0x00, 0x01, 0x00, 0x00,
+        0x05, 0x00, 0x01, 0x0d, 0x0a, 0x2d, 0xb4, 0x00, 0x00, 0x00, 0x00, 0x49,
+        0x45, 0x4e, 0x44, 0xae, 0x42, 0x60, 0x82,
+      ]);
+      return new Blob([pngData], { type: "image/png" });
+    }
+
+    it("應該能成功發送只有圖片的訊息", async () => {
+      // Mock fetch 成功回應
+      vi.spyOn(global, "fetch").mockResolvedValueOnce(
+        new Response(null, { status: 200 })
+      );
+
+      const imageBlob = createTestImageBlob();
+      const params: SendMessageWithImageParams = {
+        webhookId: testWebhook.id,
+        file: imageBlob,
+        fileName: "test.png",
+      };
+
+      const result = await sendMessageWithImage(em, params);
+
+      expect(result.success).toBe(true);
+      expect(result.statusCode).toBe(200);
+      expect(result.messageLog).toBeDefined();
+      expect(result.messageLog?.status).toBe(MessageStatus.SUCCESS);
+    });
+
+    it("應該能成功發送圖片加文字的訊息", async () => {
+      vi.spyOn(global, "fetch").mockResolvedValueOnce(
+        new Response(null, { status: 200 })
+      );
+
+      const imageBlob = createTestImageBlob();
+      const params: SendMessageWithImageParams = {
+        webhookId: testWebhook.id,
+        content: "這是圖片說明",
+        file: imageBlob,
+        fileName: "test.png",
+      };
+
+      const result = await sendMessageWithImage(em, params);
+
+      expect(result.success).toBe(true);
+      expect(result.messageLog?.content).toBe("這是圖片說明");
+    });
+
+    it("應該使用 FormData 格式發送到 Discord", async () => {
+      const fetchSpy = vi
+        .spyOn(global, "fetch")
+        .mockResolvedValueOnce(new Response(null, { status: 200 }));
+
+      const imageBlob = createTestImageBlob();
+      const params: SendMessageWithImageParams = {
+        webhookId: testWebhook.id,
+        content: "測試訊息",
+        file: imageBlob,
+        fileName: "test.png",
+      };
+
+      await sendMessageWithImage(em, params);
+
+      // 驗證 fetch 被呼叫時使用了正確的參數
+      expect(fetchSpy).toHaveBeenCalledTimes(1);
+      const [url, options] = fetchSpy.mock.calls[0];
+      expect(url).toBe(testWebhook.url);
+      expect(options?.method).toBe("POST");
+      // 驗證 body 是 FormData
+      expect(options?.body).toBeInstanceOf(FormData);
+    });
+
+    it("沒有提供 content 和 file 時應該回傳錯誤", async () => {
+      const params: SendMessageWithImageParams = {
+        webhookId: testWebhook.id,
+      };
+
+      const result = await sendMessageWithImage(em, params);
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe("訊息內容或圖片至少需要一個");
+    });
+
+    it("Webhook 不存在時應該回傳錯誤", async () => {
+      const imageBlob = createTestImageBlob();
+      const params: SendMessageWithImageParams = {
+        webhookId: "non-existent-id",
+        file: imageBlob,
+        fileName: "test.png",
+      };
+
+      const result = await sendMessageWithImage(em, params);
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe("Webhook 不存在");
+    });
+
+    it("Webhook 停用時應該回傳錯誤", async () => {
+      testWebhook.isActive = false;
+      await em.persistAndFlush(testWebhook);
+
+      const imageBlob = createTestImageBlob();
+      const params: SendMessageWithImageParams = {
+        webhookId: testWebhook.id,
+        file: imageBlob,
+        fileName: "test.png",
+      };
+
+      const result = await sendMessageWithImage(em, params);
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe("Webhook 已停用");
+    });
+
+    it("發送失敗時應該記錄錯誤", async () => {
+      vi.spyOn(global, "fetch").mockResolvedValueOnce(
+        new Response(JSON.stringify({ message: "Invalid file" }), {
+          status: 400,
+        })
+      );
+
+      const imageBlob = createTestImageBlob();
+      const params: SendMessageWithImageParams = {
+        webhookId: testWebhook.id,
+        file: imageBlob,
+        fileName: "test.png",
+      };
+
+      const result = await sendMessageWithImage(em, params);
+
+      expect(result.success).toBe(false);
+      expect(result.statusCode).toBe(400);
+      expect(result.messageLog?.status).toBe(MessageStatus.FAILED);
+    });
+
+    it("網路錯誤時應該記錄失敗", async () => {
+      vi.spyOn(global, "fetch").mockRejectedValueOnce(
+        new Error("Network error")
+      );
+
+      const imageBlob = createTestImageBlob();
+      const params: SendMessageWithImageParams = {
+        webhookId: testWebhook.id,
+        file: imageBlob,
+        fileName: "test.png",
+      };
+
+      const result = await sendMessageWithImage(em, params);
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("Network error");
+      expect(result.messageLog?.status).toBe(MessageStatus.FAILED);
+    });
+
+    it("成功發送後應該更新 Webhook 的統計資料", async () => {
+      vi.spyOn(global, "fetch").mockResolvedValueOnce(
+        new Response(null, { status: 200 })
+      );
+
+      const imageBlob = createTestImageBlob();
+      const params: SendMessageWithImageParams = {
+        webhookId: testWebhook.id,
+        file: imageBlob,
+        fileName: "test.png",
+      };
+
+      await sendMessageWithImage(em, params);
+
+      const updatedWebhook = await em.findOne(Webhook, { id: testWebhook.id });
+      expect(updatedWebhook?.successCount).toBe(1);
+      expect(updatedWebhook?.lastUsed).toBeDefined();
     });
   });
 });
