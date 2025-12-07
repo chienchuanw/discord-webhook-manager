@@ -398,7 +398,8 @@ describe("messageService", () => {
       // 驗證 fetch 被呼叫時使用了正確的參數
       expect(fetchSpy).toHaveBeenCalledTimes(1);
       const [url, options] = fetchSpy.mock.calls[0];
-      expect(url).toBe(testWebhook.url);
+      // URL 應該包含 ?wait=true 以取得完整的回應（包含 attachments）
+      expect(url).toBe(`${testWebhook.url}?wait=true`);
       expect(options?.method).toBe("POST");
       // 驗證 body 是 FormData
       expect(options?.body).toBeInstanceOf(FormData);

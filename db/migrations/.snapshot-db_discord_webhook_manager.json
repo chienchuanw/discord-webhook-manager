@@ -348,6 +348,15 @@
             "cancelled"
           ],
           "mappedType": "enum"
+        },
+        "image_url": {
+          "name": "image_url",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "text"
         }
       },
       "name": "message_log",

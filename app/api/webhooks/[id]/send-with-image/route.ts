@@ -74,6 +74,7 @@ export async function POST(request: Request, context: RouteContext) {
               statusCode: result.messageLog.statusCode,
               errorMessage: result.messageLog.errorMessage,
               sentAt: result.messageLog.sentAt,
+              imageUrl: result.messageLog.imageUrl,
             }
           : undefined,
       },
@@ -84,4 +85,3 @@ export async function POST(request: Request, context: RouteContext) {
     return NextResponse.json({ error: "伺服器錯誤" }, { status: 500 });
   }
 }
-

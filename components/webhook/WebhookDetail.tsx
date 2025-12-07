@@ -46,6 +46,7 @@ interface MessageLogItem {
   sentAt: string;
   scheduledAt?: string;
   scheduledStatus?: "pending" | "sent" | "cancelled";
+  imageUrl?: string; // Discord 回傳的圖片 URL
 }
 
 /**
@@ -684,9 +685,30 @@ export function WebhookDetail({
                             </div>
 
                             {/* 訊息內容 */}
-                            <p className="mt-1 whitespace-pre-wrap text-sm wrap-break-word text-foreground/90">
-                              {log.content}
-                            </p>
+                            {log.content && log.content !== "[圖片]" && (
+                              <p className="mt-1 whitespace-pre-wrap text-sm wrap-break-word text-foreground/90">
+                                {log.content}
+                              </p>
+                            )}
+
+                            {/* 圖片顯示 */}
+                            {log.imageUrl && (
+                              <div className="mt-2">
+                                <a
+                                  href={log.imageUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-block"
+                                >
+                                  <img
+                                    src={log.imageUrl}
+                                    alt="發送的圖片"
+                                    className="max-h-64 max-w-xs rounded-lg object-contain transition-opacity hover:opacity-80"
+                                    loading="lazy"
+                                  />
+                                </a>
+                              </div>
+                            )}
 
                             {/* 錯誤訊息 */}
                             {log.errorMessage && (

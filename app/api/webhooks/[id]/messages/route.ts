@@ -53,7 +53,7 @@ export async function GET(request: Request, context: RouteContext) {
     // 取得訊息記錄（支援分頁）
     const result = await getMessageLogs(em, id, limit, cursor);
 
-    // 格式化回傳資料（包含預約發送相關欄位）
+    // 格式化回傳資料（包含預約發送相關欄位與圖片 URL）
     const messages = result.messages.map((log) => ({
       id: log.id,
       content: log.content,
@@ -63,6 +63,7 @@ export async function GET(request: Request, context: RouteContext) {
       sentAt: log.sentAt,
       scheduledAt: log.scheduledAt,
       scheduledStatus: log.scheduledStatus,
+      imageUrl: log.imageUrl,
     }));
 
     return NextResponse.json(

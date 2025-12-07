@@ -99,6 +99,13 @@ export class MessageLog {
   scheduledStatus?: ScheduledStatus;
 
   /**
+   * 圖片 URL
+   * 當訊息包含圖片時，記錄 Discord 回傳的圖片 URL
+   */
+  @Property({ type: "text", nullable: true })
+  imageUrl?: string;
+
+  /**
    * 建構子
    * @param webhook 關聯的 Webhook
    * @param content 訊息內容

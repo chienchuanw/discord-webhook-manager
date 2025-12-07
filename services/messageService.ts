@@ -19,6 +19,7 @@ export interface CreateMessageLogParams {
   status: MessageStatus;
   statusCode?: number;
   errorMessage?: string;
+  imageUrl?: string; // Discord 回傳的圖片 URL
 }
 
 /**
@@ -64,7 +65,8 @@ export async function createMessageLog(
   em: EntityManager,
   params: CreateMessageLogParams
 ): Promise<MessageLog> {
-  const { webhook, content, status, statusCode, errorMessage } = params;
+  const { webhook, content, status, statusCode, errorMessage, imageUrl } =
+    params;
 
   const messageLog = new MessageLog(webhook, content, status);
   if (statusCode !== undefined) {
@@ -72,6 +74,9 @@ export async function createMessageLog(
   }
   if (errorMessage) {
     messageLog.errorMessage = errorMessage;
+  }
+  if (imageUrl) {
+    messageLog.imageUrl = imageUrl;
   }
 
   await em.persistAndFlush(messageLog);
@@ -284,8 +289,9 @@ export async function sendMessageWithImage(
   }
 
   // 發送訊息到 Discord（使用 FormData，不設定 Content-Type）
+  // 加上 ?wait=true 讓 Discord 回傳完整的訊息資料（包含 attachments）
   try {
-    const response = await fetch(webhook.url, {
+    const response = await fetch(`${webhook.url}?wait=true`, {
       method: "POST",
       body: formData,
     });
@@ -293,9 +299,24 @@ export async function sendMessageWithImage(
     const statusCode = response.status;
     const isSuccess = response.ok;
 
-    // 建立訊息記錄（使用文字內容或標記有圖片）
+    // 解析回應以取得圖片 URL
     let errorMessage: string | undefined;
-    if (!isSuccess) {
+    let imageUrl: string | undefined;
+
+    if (isSuccess) {
+      try {
+        // Discord 回傳的 JSON 包含 attachments 陣列
+        const responseData = await response.json();
+        // 取得第一張圖片的 URL（proxy_url 或 url）
+        if (responseData.attachments && responseData.attachments.length > 0) {
+          imageUrl =
+            responseData.attachments[0].proxy_url ||
+            responseData.attachments[0].url;
+        }
+      } catch {
+        // 解析失敗不影響成功狀態
+      }
+    } else {
       try {
         const errorData = await response.json();
         errorMessage = JSON.stringify(errorData);
@@ -313,6 +334,7 @@ export async function sendMessageWithImage(
       status: isSuccess ? MessageStatus.SUCCESS : MessageStatus.FAILED,
       statusCode,
       errorMessage,
+      imageUrl, // 儲存圖片 URL
     });
 
     // 更新 Webhook 統計資料
