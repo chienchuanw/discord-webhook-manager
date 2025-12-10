@@ -1,8 +1,7 @@
 "use client";
 
 import { Menu } from "lucide-react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faDiscord } from "@fortawesome/free-brands-svg-icons";
+import { DiscordIcon } from "@/components/icons";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 
 /* ============================================
@@ -25,7 +24,7 @@ export function MobileHeader({ title = "Webhook Manger" }: MobileHeaderProps) {
       {/* Logo 與標題 */}
       <div className="flex items-center gap-2">
         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-discord-blurple">
-          <FontAwesomeIcon icon={faDiscord} className="h-4 w-4 text-white" />
+          <DiscordIcon className="h-4 w-4 text-white" />
         </div>
         <span className="font-semibold text-foreground">{title}</span>
       </div>

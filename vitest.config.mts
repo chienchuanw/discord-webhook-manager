@@ -20,7 +20,7 @@ export default defineConfig({
     // 測試檔案的匹配模式
     include: ["**/*.test.ts", "**/*.test.tsx"],
     // 排除的目錄
-    exclude: ["node_modules", ".next"],
+    exclude: ["node_modules", ".next", "dist"],
     // 設定檔案執行前的 setup
     setupFiles: ["./vitest.setup.ts"],
     // 序列執行測試（避免資料庫競爭）

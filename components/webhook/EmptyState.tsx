@@ -1,8 +1,7 @@
 "use client";
 
 import { Plus, Sparkles } from "lucide-react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faDiscord } from "@fortawesome/free-brands-svg-icons";
+import { DiscordIcon } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 
 /* ============================================
@@ -26,10 +25,7 @@ export function EmptyState({ onAddWebhook }: EmptyStateProps) {
 
           {/* 主圖示容器 */}
           <div className="relative flex h-24 w-24 items-center justify-center rounded-full bg-linear-to-br from-discord-blurple to-[#4752c4]">
-            <FontAwesomeIcon
-              icon={faDiscord}
-              className="h-12 w-12 text-white"
-            />
+            <DiscordIcon className="h-12 w-12 text-white" />
           </div>
 
           {/* 裝飾星星 */}

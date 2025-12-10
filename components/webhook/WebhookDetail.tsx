@@ -17,7 +17,7 @@ import {
   ImagePlus,
 } from "lucide-react";
 
-import { faDiscord } from "@fortawesome/free-brands-svg-icons";
+import { DiscordIcon } from "@/components/icons";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -32,7 +32,6 @@ import {
 import type { WebhookItem } from "@/components/layout/WebhookSidebar";
 import { ScheduleDialog } from "@/components/webhook/ScheduleDialog";
 import { WebhookScheduleList } from "@/components/webhook/WebhookScheduleList";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 /* ============================================
    訊息記錄型別定義
@@ -660,10 +659,7 @@ export function WebhookDetail({
                           {/* Bot 頭像 */}
                           <div className="shrink-0">
                             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-discord-blurple">
-                              <FontAwesomeIcon
-                                icon={faDiscord}
-                                className="h-5 w-5 text-white"
-                              />
+                              <DiscordIcon className="h-5 w-5 text-white" />
                             </div>
                           </div>
 

@@ -4,8 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Search, Plus, MoreVertical, Circle } from "lucide-react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faDiscord } from "@fortawesome/free-brands-svg-icons";
+import { DiscordIcon } from "@/components/icons";
 
 import {
   Sidebar,
@@ -178,10 +177,7 @@ function WebhookListItem({
         <Link href={`/webhooks/${webhook.id}`}>
           {/* Webhook 圖示與狀態指示 */}
           <div className="relative">
-            <FontAwesomeIcon
-              icon={faDiscord}
-              className="h-4 w-4 text-muted-foreground"
-            />
+            <DiscordIcon className="h-4 w-4 text-muted-foreground" />
             {/* 狀態指示燈 */}
             <Circle
               className={`absolute -bottom-0.5 -right-0.5 h-2 w-2 fill-current ${
