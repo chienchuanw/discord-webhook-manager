@@ -1,6 +1,9 @@
 import { Entity, PrimaryKey, Property, ManyToOne, Enum } from "@mikro-orm/core";
 import { randomUUID } from "crypto";
-import { Webhook } from "./Webhook";
+
+// 使用 type import 來避免循環依賴
+// Webhook -> WebhookSchedule -> Webhook 會造成 bundler 環境中的循環依賴問題
+import type { Webhook } from "./Webhook";
 import { ScheduleType } from "./Template";
 import type { EmbedData } from "./Template";
 
@@ -33,8 +36,9 @@ export class WebhookSchedule {
   /**
    * 關聯的 Webhook
    * 使用 ManyToOne 建立多對一關係
+   * 使用字串形式的 entity 名稱，避免循環依賴問題
    */
-  @ManyToOne(() => Webhook)
+  @ManyToOne("Webhook")
   webhook!: Webhook;
 
   /**

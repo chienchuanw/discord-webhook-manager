@@ -11,6 +11,8 @@
  * 注意：使用 .mjs 格式以避免生產環境需要 TypeScript
  */
 
+import TerserPlugin from "terser-webpack-plugin";
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // 將資料庫相關套件設為外部套件，避免打包錯誤
@@ -29,6 +31,40 @@ const nextConfig = {
     "tedious",
     "node-cron",
   ],
+
+  // 禁用 server-side minification
+  // MikroORM 使用類別名稱來識別 Entity，minification 會導致 "Duplicate entity names" 錯誤
+  // 參考：https://github.com/vercel/next.js/issues/59594
+  experimental: {
+    serverMinification: false,
+  },
+
+  // Webpack 配置：使用 TerserPlugin 保留類別名稱
+  // MikroORM 依賴 constructor.name 來識別 Entity
+  // 參考：https://mikro-orm.io/docs/deployment#webpack
+  webpack: (config, { isServer }) => {
+    if (isServer) {
+      // 使用 TerserPlugin 並設定保留類別名稱
+      // 這是 MikroORM 官方推薦的 Webpack 配置
+      config.optimization.minimizer = [
+        new TerserPlugin({
+          terserOptions: {
+            // 禁用 mangle，避免變數名稱被壓縮
+            mangle: false,
+            // 保留類別名稱和函式名稱
+            compress: {
+              keep_classnames: true,
+              keep_fnames: true,
+            },
+            // 額外設定：保留類別名稱
+            keep_classnames: true,
+            keep_fnames: true,
+          },
+        }),
+      ];
+    }
+    return config;
+  },
 
   // Electron 環境下的特殊設定
   ...(process.env.IS_ELECTRON === "true" && {

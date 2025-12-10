@@ -20,6 +20,38 @@ let isStarted = false;
 const DEFAULT_CRON_SCHEDULE = "* * * * *";
 
 /**
+ * 檢查錯誤是否為連線拒絕錯誤
+ * 這種錯誤通常發生在伺服器尚未完全啟動時，屬於正常情況，不需要記錄
+ */
+function isConnectionRefusedError(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+
+  // 檢查 error.message
+  if (error.message.includes("ECONNREFUSED")) return true;
+  if (error.message.includes("fetch failed")) return true;
+
+  // 檢查 error.cause（Node.js fetch 錯誤通常在這裡）
+  const cause = (error as Error & { cause?: unknown }).cause;
+  if (cause) {
+    // 檢查 cause.code
+    if (typeof cause === "object" && "code" in cause) {
+      if ((cause as { code: string }).code === "ECONNREFUSED") return true;
+    }
+    // 檢查 AggregateError 的 errors 陣列
+    if (cause instanceof AggregateError) {
+      return cause.errors.some(
+        (e) =>
+          e instanceof Error &&
+          ((e as Error & { code?: string }).code === "ECONNREFUSED" ||
+            e.message.includes("ECONNREFUSED"))
+      );
+    }
+  }
+
+  return false;
+}
+
+/**
  * 取得基礎 URL
  */
 function getBaseUrl(): string {
@@ -62,7 +94,8 @@ async function triggerProcessSchedules(): Promise<void> {
       );
     }
   } catch (error) {
-    if (error instanceof Error && error.message.includes("ECONNREFUSED")) {
+    // 連線拒絕錯誤（伺服器尚未啟動）是正常情況，靜默忽略
+    if (isConnectionRefusedError(error)) {
       return;
     }
     console.error("[Local Cron] process-schedules 錯誤:", error);
@@ -95,7 +128,8 @@ async function triggerScheduledSend(): Promise<void> {
       );
     }
   } catch (error) {
-    if (error instanceof Error && error.message.includes("ECONNREFUSED")) {
+    // 連線拒絕錯誤（伺服器尚未啟動）是正常情況，靜默忽略
+    if (isConnectionRefusedError(error)) {
       return;
     }
     console.error("[Local Cron] send-scheduled 錯誤:", error);

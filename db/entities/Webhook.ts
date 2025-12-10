@@ -6,6 +6,9 @@ import {
   Collection,
 } from "@mikro-orm/core";
 import { randomUUID } from "crypto";
+
+// 使用 type import 來避免循環依賴
+// 搭配字串形式的 entity 名稱，讓 MikroORM 在 bundler 環境中正確解析
 import type { MessageLog } from "./MessageLog";
 import type { WebhookSchedule } from "./WebhookSchedule";
 
@@ -56,6 +59,7 @@ export class Webhook {
   /**
    * 訊息記錄列表
    * 使用 OneToMany 建立一對多關係
+   * 使用字串形式的 entity 名稱和 mappedBy，避免循環依賴問題
    */
   @OneToMany("MessageLog", "webhook")
   messageLogs = new Collection<MessageLog>(this);
@@ -63,6 +67,7 @@ export class Webhook {
   /**
    * 排程列表
    * 使用 OneToMany 建立一對多關係
+   * 使用字串形式的 entity 名稱和 mappedBy，避免循環依賴問題
    */
   @OneToMany("WebhookSchedule", "webhook")
   schedules = new Collection<WebhookSchedule>(this);
