@@ -1,5 +1,3 @@
-import type { NextConfig } from "next";
-
 /**
  * Next.js 配置
  * 設定 serverExternalPackages 避免 MikroORM 相關套件被打包
@@ -10,9 +8,11 @@ import type { NextConfig } from "next";
  * - Next.js 會在 Electron 中以伺服器模式運行
  * - 不使用靜態匯出，以保留所有動態功能
  *
- * 注意：Next.js 16+ 已預設支援 instrumentation.ts，不需額外設定
+ * 注意：使用 .mjs 格式以避免生產環境需要 TypeScript
  */
-const nextConfig: NextConfig = {
+
+/** @type {import('next').NextConfig} */
+const nextConfig = {
   // 將資料庫相關套件設為外部套件，避免打包錯誤
   serverExternalPackages: [
     "@mikro-orm/core",
@@ -31,11 +31,11 @@ const nextConfig: NextConfig = {
   ],
 
   // Electron 環境下的特殊設定
-  ...(process.env.IS_ELECTRON === "true" &&
-    {
-      // 可以在這裡加入 Electron 特定的設定
-      // 例如：調整 webpack 配置、修改輸出路徑等
-    }),
+  ...(process.env.IS_ELECTRON === "true" && {
+    // 可以在這裡加入 Electron 特定的設定
+    // 例如：調整 webpack 配置、修改輸出路徑等
+  }),
 };
 
 export default nextConfig;
+
