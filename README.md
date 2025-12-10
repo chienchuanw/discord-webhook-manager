@@ -225,10 +225,20 @@ Build the Electron application for macOS:
 pnpm electron:build
 ```
 
-This creates:
+This command:
 
-- `.app` bundle in `dist/mac/`
-- `.dmg` installer in `dist/`
+1. Builds the Next.js production bundle
+2. Packages the application with Electron Builder
+3. Creates both `.dmg` and `.zip` installers for both Intel (x64) and Apple Silicon (arm64)
+
+Output files will be in the `dist/` directory:
+
+- `Discord Webhook Manager-x.x.x-arm64.dmg` - DMG installer for Apple Silicon
+- `Discord Webhook Manager-x.x.x.dmg` - DMG installer for Intel
+- `Discord Webhook Manager-x.x.x-arm64-mac.zip` - ZIP archive for Apple Silicon
+- `Discord Webhook Manager-x.x.x-mac.zip` - ZIP archive for Intel
+- `mac-arm64/` - Application bundle directory for Apple Silicon
+- `mac/` - Application bundle directory for Intel
 
 ### Testing the Build
 
@@ -238,13 +248,91 @@ Test the packaged application without creating installers:
 pnpm electron:build:dir
 ```
 
-The application will be available in `dist/mac/` directory.
+The application will be available in `dist/mac-arm64/` or `dist/mac/` directory.
+
+### Installing the Application
+
+#### Method 1: Using DMG Installer (Recommended)
+
+1. Double-click the `.dmg` file to open the installer
+2. Drag the "Discord Webhook Manager" application to the Applications folder
+3. Wait for the copy process to complete
+4. Open Applications folder and double-click "Discord Webhook Manager" to launch
+
+#### Method 2: Direct Launch from Build Directory
+
+For testing purposes, you can launch directly from the build output:
+
+```bash
+open ./dist/mac-arm64/Discord\ Webhook\ Manager.app
+```
+
+Or for Intel Macs:
+
+```bash
+open ./dist/mac/Discord\ Webhook\ Manager.app
+```
+
+### Launching the Application
+
+Once installed in the Applications folder:
+
+1. Open **Finder** and navigate to **Applications**
+2. Find **Discord Webhook Manager**
+3. Double-click to launch
+
+Or use the command line:
+
+```bash
+open /Applications/Discord\ Webhook\ Manager.app
+```
+
+**Note**: The first launch may take 5-10 seconds as the Next.js server initializes.
 
 ### Environment Variables for Electron
 
-Ensure these variables are set in `.env.local`:
+The application requires a `.env.local` file with database configuration.
 
-- `DATABASE_URL`: PostgreSQL connection string
+#### For Development
+
+Place `.env.local` in the project root directory:
+
+```bash
+DATABASE_URL=postgresql://user:password@localhost:5432/db_discord_webhook_manager
+CRON_SCHEDULE=* * * * *
+CRON_SECRET=development-secret
+```
+
+#### For Installed Application
+
+After installing the application, create `.env.local` in the application's Resources directory:
+
+**For Apple Silicon (arm64):**
+
+```bash
+~/Library/Application\ Support/Discord\ Webhook\ Manager/.env.local
+```
+
+**For Intel (x64):**
+
+```bash
+~/Library/Application\ Support/Discord\ Webhook\ Manager/.env.local
+```
+
+Or use the command line to create it:
+
+```bash
+mkdir -p ~/Library/Application\ Support/Discord\ Webhook\ Manager
+cat > ~/Library/Application\ Support/Discord\ Webhook\ Manager/.env.local << EOF
+DATABASE_URL=postgresql://user:password@localhost:5432/db_discord_webhook_manager
+CRON_SCHEDULE=* * * * *
+CRON_SECRET=development-secret
+EOF
+```
+
+**Environment Variables:**
+
+- `DATABASE_URL`: PostgreSQL connection string (required)
 - `CRON_SCHEDULE`: Cron expression for scheduling (default: `* * * * *` - every minute)
 - `CRON_SECRET`: Secret token for cron endpoints (default: `development-secret`)
 
@@ -272,6 +360,30 @@ Ensure these variables are set in your production environment:
 
 ### Electron Application Issues
 
+#### Application closes immediately after launching
+
+**Cause**: Missing or invalid `.env.local` file
+
+**Solution**:
+
+1. Verify `.env.local` exists in the correct location:
+
+   ```bash
+   cat ~/Library/Application\ Support/Discord\ Webhook\ Manager/.env.local
+   ```
+
+2. Ensure `DATABASE_URL` is set correctly:
+
+   ```bash
+   grep DATABASE_URL ~/Library/Application\ Support/Discord\ Webhook\ Manager/.env.local
+   ```
+
+3. Test the database connection:
+
+   ```bash
+   psql $DATABASE_URL -c "SELECT 1"
+   ```
+
 #### Application fails to start
 
 1. Ensure PostgreSQL is running:
@@ -286,7 +398,13 @@ Ensure these variables are set in your production environment:
    psql -l | grep db_discord_webhook_manager
    ```
 
-3. Run migrations:
+3. Create database if it doesn't exist:
+
+   ```bash
+   createdb db_discord_webhook_manager
+   ```
+
+4. Run migrations:
 
    ```bash
    pnpm migration:up
@@ -297,6 +415,20 @@ Ensure these variables are set in your production environment:
 1. Check `.env.local` for `CRON_SCHEDULE` variable
 2. Verify the cron expression is valid
 3. Check application logs for errors
+
+#### Debugging from Terminal
+
+To see detailed error messages, launch the application from the terminal:
+
+```bash
+open -a "Discord Webhook Manager" --args --verbose
+```
+
+Or directly run the executable:
+
+```bash
+./dist/mac-arm64/Discord\ Webhook\ Manager.app/Contents/MacOS/Discord\ Webhook\ Manager
+```
 
 For more detailed troubleshooting, see [ELECTRON_TESTING.md](./ELECTRON_TESTING.md).
 
