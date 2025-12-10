@@ -4,6 +4,7 @@ import * as React from "react";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { WebhookSidebar } from "@/components/layout/WebhookSidebar";
 import { MobileHeader } from "@/components/layout/MobileHeader";
+import { TitleBar } from "@/components/layout/TitleBar";
 import { useDashboard } from "@/contexts/DashboardContext";
 
 /* ============================================
@@ -33,26 +34,32 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <SidebarProvider>
-      {/* 側邊欄 - 當有 Webhook 時顯示 */}
-      {!isEmpty && (
-        <WebhookSidebar
-          webhooks={webhooks}
-          onAdd={openAddDialog}
-          onEdit={openEditDialog}
-          onDelete={openDeleteDialog}
-          onTestSend={handleTestSend}
-        />
-      )}
+    <div className="flex h-screen flex-col">
+      {/* 頂部標題列 - 提供視窗拖拉功能 */}
+      <TitleBar />
 
-      {/* 主內容區 */}
-      <main className="flex h-screen flex-1 flex-col overflow-hidden bg-background">
-        {/* 行動裝置專用頂部導覽列 */}
-        {!isEmpty && <MobileHeader />}
+      {/* 主要內容區域（側邊欄 + 內容） */}
+      <SidebarProvider>
+        {/* 側邊欄 - 當有 Webhook 時顯示 */}
+        {!isEmpty && (
+          <WebhookSidebar
+            webhooks={webhooks}
+            onAdd={openAddDialog}
+            onEdit={openEditDialog}
+            onDelete={openDeleteDialog}
+            onTestSend={handleTestSend}
+          />
+        )}
 
-        {/* 子頁面內容 */}
-        <div className="min-h-0 flex-1">{children}</div>
-      </main>
-    </SidebarProvider>
+        {/* 主內容區 */}
+        <main className="flex flex-1 flex-col overflow-hidden bg-background">
+          {/* 行動裝置專用頂部導覽列 */}
+          {!isEmpty && <MobileHeader />}
+
+          {/* 子頁面內容 */}
+          <div className="min-h-0 flex-1">{children}</div>
+        </main>
+      </SidebarProvider>
+    </div>
   );
 }

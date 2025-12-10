@@ -76,8 +76,12 @@ function startNextServer() {
         ...process.env,
         NODE_ENV: "production",
         ELECTRON_RUN_AS_NODE: "1", // 讓 Electron 作為 Node.js 執行
+        // macOS: 隱藏子程序的 Dock 圖示
+        LSBackgroundOnly: "1",
       },
       stdio: ["pipe", "pipe", "pipe"],
+      // Windows: 隱藏子程序的視窗
+      windowsHide: true,
     });
 
     // 輸出 Next.js 伺服器的日誌
