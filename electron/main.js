@@ -40,15 +40,29 @@ function startNextServer() {
     // 生產模式：啟動 Next.js 伺服器
     console.log("🚀 啟動 Next.js 伺服器...");
 
-    // 設定環境變數路徑
+    // 設定路徑 - 在打包後的應用程式中需要使用正確的路徑
     const appPath = app.getAppPath();
-    const envPath = path.join(appPath, ".env.local");
+    const isPackaged = app.isPackaged;
+
+    // .env.local 在打包後會被放到 Resources 資料夾
+    const envPath = isPackaged
+      ? path.join(process.resourcesPath, ".env.local")
+      : path.join(appPath, ".env.local");
 
     // 載入環境變數
     require("dotenv").config({ path: envPath });
 
+    console.log(`📁 應用程式路徑: ${appPath}`);
+    console.log(`📁 環境變數路徑: ${envPath}`);
+    console.log(`📦 是否已打包: ${isPackaged}`);
+
+    // Next.js 的啟動路徑
+    const nextBinPath = isPackaged
+      ? path.join(appPath, "node_modules/next/dist/bin/next")
+      : path.join(appPath, "node_modules/next/dist/bin/next");
+
     // 啟動 Next.js 伺服器
-    nextServerProcess = spawn("node", [path.join(appPath, "node_modules/next/dist/bin/next"), "start", "-p", "3000"], {
+    nextServerProcess = spawn("node", [nextBinPath, "start", "-p", "3000"], {
       cwd: appPath,
       env: {
         ...process.env,

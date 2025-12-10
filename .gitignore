@@ -50,3 +50,7 @@ next-env.d.ts
 # uploads (使用者上傳的圖片)
 /public/uploads/*
 !/public/uploads/.gitkeep
+
+# electron
+/dist/*
+!/dist/.keep
