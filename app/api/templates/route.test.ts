@@ -3,7 +3,7 @@
  * TDD: 測試 /api/templates 的 GET 和 POST 端點
  */
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
-import { MikroORM } from "@mikro-orm/postgresql";
+import { MikroORM } from "@mikro-orm/sqlite";
 import config from "../../../mikro-orm.config";
 import { Template, ScheduleType } from "../../../db/entities/Template";
 import { WebhookSchedule } from "../../../db/entities/WebhookSchedule";

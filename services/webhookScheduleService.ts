@@ -2,7 +2,7 @@
  * WebhookSchedule Service
  * 處理 Webhook 排程的 CRUD 操作
  */
-import { EntityManager } from "@mikro-orm/postgresql";
+import { EntityManager } from "@mikro-orm/sqlite";
 import { WebhookSchedule } from "../db/entities/WebhookSchedule";
 import { Webhook } from "../db/entities/Webhook";
 import {

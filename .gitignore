@@ -54,3 +54,7 @@ next-env.d.ts
 # electron
 /dist/*
 !/dist/.keep
+
+# SQLite database files
+/data/*
+!/data/.gitkeep

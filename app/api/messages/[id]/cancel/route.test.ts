@@ -11,7 +11,7 @@ import {
   beforeEach,
   vi,
 } from "vitest";
-import { MikroORM } from "@mikro-orm/postgresql";
+import { MikroORM } from "@mikro-orm/sqlite";
 import config from "../../../../../mikro-orm.config";
 import { Webhook } from "../../../../../db/entities/Webhook";
 import {
@@ -19,6 +19,7 @@ import {
   MessageStatus,
   ScheduledStatus,
 } from "../../../../../db/entities/MessageLog";
+import { WebhookSchedule } from "../../../../../db/entities/WebhookSchedule";
 import { DELETE } from "./route";
 
 describe("DELETE /api/messages/[id]/cancel", () => {
@@ -37,6 +38,7 @@ describe("DELETE /api/messages/[id]/cancel", () => {
 
     const em = orm.em.fork();
     await em.nativeDelete(MessageLog, {});
+    await em.nativeDelete(WebhookSchedule, {});
     await em.nativeDelete(Webhook, {});
 
     const testWebhook = new Webhook(

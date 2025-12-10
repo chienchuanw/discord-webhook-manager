@@ -11,7 +11,7 @@ import {
   beforeEach,
   vi,
 } from "vitest";
-import { MikroORM, EntityManager } from "@mikro-orm/postgresql";
+import { MikroORM, EntityManager } from "@mikro-orm/sqlite";
 import config from "../mikro-orm.config";
 import { Webhook } from "../db/entities/Webhook";
 import { MessageLog, MessageStatus } from "../db/entities/MessageLog";

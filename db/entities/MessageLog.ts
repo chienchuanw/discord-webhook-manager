@@ -41,7 +41,7 @@ export enum ScheduledStatus {
  */
 @Entity()
 export class MessageLog {
-  @PrimaryKey({ type: "uuid" })
+  @PrimaryKey({ type: "text" })
   id: string = randomUUID();
 
   /**

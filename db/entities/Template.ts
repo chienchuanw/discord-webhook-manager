@@ -28,7 +28,7 @@ export { ScheduleType, type EmbedData };
  */
 @Entity()
 export class Template {
-  @PrimaryKey({ type: "uuid" })
+  @PrimaryKey({ type: "text" })
   id: string = randomUUID();
 
   /**

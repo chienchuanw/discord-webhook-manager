@@ -3,10 +3,11 @@
  * TDD: 測試 /api/webhooks 的 GET 和 POST 端點
  */
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
-import { MikroORM } from "@mikro-orm/postgresql";
+import { MikroORM } from "@mikro-orm/sqlite";
 import config from "../../../mikro-orm.config";
 import { Webhook } from "../../../db/entities/Webhook";
 import { MessageLog } from "../../../db/entities/MessageLog";
+import { WebhookSchedule } from "../../../db/entities/WebhookSchedule";
 import { GET, POST } from "./route";
 
 describe("/api/webhooks", () => {
@@ -19,10 +20,11 @@ describe("/api/webhooks", () => {
     global.__orm = orm;
   });
 
-  // 每個測試前清空資料（先刪除 MessageLog 再刪除 Webhook，避免外鍵約束錯誤）
+  // 每個測試前清空資料（先刪除有外鍵約束的資料表，再刪除 Webhook）
   beforeEach(async () => {
     const em = orm.em.fork();
     await em.nativeDelete(MessageLog, {});
+    await em.nativeDelete(WebhookSchedule, {});
     await em.nativeDelete(Webhook, {});
   });
 

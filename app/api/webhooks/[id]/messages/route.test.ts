@@ -3,13 +3,14 @@
  * TDD: 測試 GET /api/webhooks/[id]/messages 端點
  */
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
-import { MikroORM } from "@mikro-orm/postgresql";
+import { MikroORM } from "@mikro-orm/sqlite";
 import config from "../../../../../mikro-orm.config";
 import { Webhook } from "../../../../../db/entities/Webhook";
 import {
   MessageLog,
   MessageStatus,
 } from "../../../../../db/entities/MessageLog";
+import { WebhookSchedule } from "../../../../../db/entities/WebhookSchedule";
 import { GET } from "./route";
 
 describe("GET /api/webhooks/[id]/messages", () => {
@@ -26,6 +27,7 @@ describe("GET /api/webhooks/[id]/messages", () => {
   beforeEach(async () => {
     const em = orm.em.fork();
     await em.nativeDelete(MessageLog, {});
+    await em.nativeDelete(WebhookSchedule, {});
     await em.nativeDelete(Webhook, {});
 
     const testWebhook = new Webhook(

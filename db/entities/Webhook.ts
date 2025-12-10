@@ -26,7 +26,7 @@ import type { WebhookSchedule } from "./WebhookSchedule";
  */
 @Entity()
 export class Webhook {
-  @PrimaryKey({ type: "uuid" })
+  @PrimaryKey({ type: "text" })
   id: string = randomUUID();
 
   @Property({ type: "string", length: 255 })

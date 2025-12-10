@@ -52,8 +52,15 @@ function startNextServer() {
     // 載入環境變數
     require("dotenv").config({ path: envPath });
 
+    // 設定 SQLite 資料庫路徑
+    // 生產模式：使用使用者資料目錄（確保資料持久化）
+    const userDataPath = app.getPath("userData");
+    const dbPath = path.join(userDataPath, "app.db");
+    process.env.DATABASE_PATH = dbPath;
+
     console.log(`📁 應用程式路徑: ${appPath}`);
     console.log(`📁 環境變數路徑: ${envPath}`);
+    console.log(`📁 資料庫路徑: ${dbPath}`);
     console.log(`📦 是否已打包: ${isPackaged}`);
 
     // Next.js CLI 路徑

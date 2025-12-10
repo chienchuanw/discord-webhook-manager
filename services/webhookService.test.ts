@@ -3,10 +3,11 @@
  * TDD: 先定義預期行為，再實作功能
  */
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
-import { MikroORM, EntityManager } from "@mikro-orm/postgresql";
+import { MikroORM, EntityManager } from "@mikro-orm/sqlite";
 import config from "../mikro-orm.config";
 import { Webhook } from "../db/entities/Webhook";
 import { MessageLog } from "../db/entities/MessageLog";
+import { WebhookSchedule } from "../db/entities/WebhookSchedule";
 import {
   createWebhook,
   getWebhookById,
@@ -33,8 +34,9 @@ describe("webhookService", () => {
   // 每個測試前清空資料並取得新的 EntityManager
   beforeEach(async () => {
     em = orm.em.fork();
-    // 先清空 message_log 資料表（因為有外鍵約束）
+    // 先清空有外鍵約束的資料表
     await em.nativeDelete(MessageLog, {});
+    await em.nativeDelete(WebhookSchedule, {});
     // 再清空 webhook 資料表
     await em.nativeDelete(Webhook, {});
   });

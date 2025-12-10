@@ -2,7 +2,7 @@
  * Message Service
  * 處理訊息發送與記錄的邏輯
  */
-import { EntityManager } from "@mikro-orm/postgresql";
+import { EntityManager } from "@mikro-orm/sqlite";
 import { Webhook } from "../db/entities/Webhook";
 import { MessageLog, MessageStatus } from "../db/entities/MessageLog";
 

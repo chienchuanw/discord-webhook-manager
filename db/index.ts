@@ -1,4 +1,6 @@
-import { MikroORM, EntityManager } from "@mikro-orm/postgresql";
+import { MikroORM, EntityManager } from "@mikro-orm/sqlite";
+import * as fs from "fs";
+import * as path from "path";
 import config from "../mikro-orm.config";
 
 /**
@@ -13,12 +15,34 @@ declare global {
 }
 
 /**
+ * 確保資料庫目錄存在
+ * SQLite 需要目錄存在才能建立資料庫檔案
+ */
+function ensureDatabaseDirectory(dbPath: string): void {
+  const dir = path.dirname(dbPath);
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+}
+
+/**
  * 取得 MikroORM 實例
  * 如果尚未初始化則建立新連線
  */
 export async function getORM(): Promise<MikroORM> {
   if (!global.__orm) {
+    // 確保資料庫目錄存在
+    const dbPath = config.dbName as string;
+    ensureDatabaseDirectory(dbPath);
+
     global.__orm = await MikroORM.init(config);
+
+    // 確保資料表存在
+    // 測試環境使用 schema generator（避免 TypeScript migration 編譯問題）
+    // 生產環境使用 migration
+    const generator = global.__orm.getSchemaGenerator();
+    await generator.ensureDatabase();
+    await generator.updateSchema();
   }
   return global.__orm;
 }
@@ -42,4 +66,3 @@ export async function closeORM(): Promise<void> {
     global.__orm = undefined;
   }
 }
-

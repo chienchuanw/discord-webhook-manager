@@ -3,7 +3,7 @@
  * 測試 /api/webhooks/[id]/schedules 端點
  */
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
-import { MikroORM, EntityManager } from "@mikro-orm/postgresql";
+import { MikroORM, EntityManager } from "@mikro-orm/sqlite";
 import config from "../../../../../mikro-orm.config";
 import { Webhook } from "../../../../../db/entities/Webhook";
 import { WebhookSchedule } from "../../../../../db/entities/WebhookSchedule";

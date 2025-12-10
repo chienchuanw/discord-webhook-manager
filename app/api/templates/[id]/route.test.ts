@@ -3,7 +3,7 @@
  * TDD: 測試 /api/templates/[id] 的 GET, PATCH, DELETE 端點
  */
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
-import { MikroORM } from "@mikro-orm/postgresql";
+import { MikroORM } from "@mikro-orm/sqlite";
 import config from "../../../../mikro-orm.config";
 import { Template, ScheduleType } from "../../../../db/entities/Template";
 import { WebhookSchedule } from "../../../../db/entities/WebhookSchedule";

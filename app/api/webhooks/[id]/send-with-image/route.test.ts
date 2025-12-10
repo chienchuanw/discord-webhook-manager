@@ -11,10 +11,11 @@ import {
   beforeEach,
   vi,
 } from "vitest";
-import { MikroORM } from "@mikro-orm/postgresql";
+import { MikroORM } from "@mikro-orm/sqlite";
 import config from "../../../../../mikro-orm.config";
 import { Webhook } from "../../../../../db/entities/Webhook";
 import { MessageLog } from "../../../../../db/entities/MessageLog";
+import { WebhookSchedule } from "../../../../../db/entities/WebhookSchedule";
 import { POST } from "./route";
 
 /**
@@ -68,6 +69,7 @@ describe("POST /api/webhooks/[id]/send-with-image", () => {
 
     const em = orm.em.fork();
     await em.nativeDelete(MessageLog, {});
+    await em.nativeDelete(WebhookSchedule, {});
     await em.nativeDelete(Webhook, {});
 
     const testWebhook = new Webhook(
@@ -180,4 +182,3 @@ describe("POST /api/webhooks/[id]/send-with-image", () => {
     expect(data.error).toBe("Webhook 已停用");
   });
 });
-

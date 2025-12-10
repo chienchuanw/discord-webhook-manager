@@ -11,10 +11,14 @@ import {
   beforeEach,
   vi,
 } from "vitest";
-import { MikroORM } from "@mikro-orm/postgresql";
+import { MikroORM } from "@mikro-orm/sqlite";
 import config from "../../../../../mikro-orm.config";
 import { Webhook } from "../../../../../db/entities/Webhook";
-import { MessageLog, ScheduledStatus } from "../../../../../db/entities/MessageLog";
+import {
+  MessageLog,
+  ScheduledStatus,
+} from "../../../../../db/entities/MessageLog";
+import { WebhookSchedule } from "../../../../../db/entities/WebhookSchedule";
 import { POST } from "./route";
 
 describe("POST /api/webhooks/[id]/schedule", () => {
@@ -33,6 +37,7 @@ describe("POST /api/webhooks/[id]/schedule", () => {
 
     const em = orm.em.fork();
     await em.nativeDelete(MessageLog, {});
+    await em.nativeDelete(WebhookSchedule, {});
     await em.nativeDelete(Webhook, {});
 
     const testWebhook = new Webhook(
@@ -166,4 +171,3 @@ describe("POST /api/webhooks/[id]/schedule", () => {
     expect(data.error).toBe("預約時間必須在未來");
   });
 });
-

@@ -16,7 +16,7 @@ const nextConfig: NextConfig = {
   // 將資料庫相關套件設為外部套件，避免打包錯誤
   serverExternalPackages: [
     "@mikro-orm/core",
-    "@mikro-orm/postgresql",
+    "@mikro-orm/sqlite",
     "@mikro-orm/knex",
     "@mikro-orm/migrations",
     "pg",

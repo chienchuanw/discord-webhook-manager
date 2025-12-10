@@ -27,7 +27,7 @@ import type { EmbedData } from "./Template";
  */
 @Entity()
 export class WebhookSchedule {
-  @PrimaryKey({ type: "uuid" })
+  @PrimaryKey({ type: "text" })
   id: string = randomUUID();
 
   /**

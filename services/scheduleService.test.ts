@@ -11,7 +11,7 @@ import {
   beforeEach,
   vi,
 } from "vitest";
-import { MikroORM, EntityManager } from "@mikro-orm/postgresql";
+import { MikroORM, EntityManager } from "@mikro-orm/sqlite";
 import config from "../mikro-orm.config";
 import { Webhook } from "../db/entities/Webhook";
 import {
@@ -19,6 +19,7 @@ import {
   MessageStatus,
   ScheduledStatus,
 } from "../db/entities/MessageLog";
+import { WebhookSchedule } from "../db/entities/WebhookSchedule";
 import {
   createScheduledMessage,
   cancelScheduledMessage,
@@ -43,6 +44,7 @@ describe("scheduleService", () => {
   beforeEach(async () => {
     em = orm.em.fork();
     await em.nativeDelete(MessageLog, {});
+    await em.nativeDelete(WebhookSchedule, {});
     await em.nativeDelete(Webhook, {});
 
     testWebhook = new Webhook(

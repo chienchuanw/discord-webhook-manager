@@ -3,7 +3,7 @@
  * 處理 WebhookSchedule 的觸發與發送邏輯
  * 支援純文字、Embed、圖片發送
  */
-import { EntityManager } from "@mikro-orm/postgresql";
+import { EntityManager } from "@mikro-orm/sqlite";
 import { WebhookSchedule } from "../db/entities/WebhookSchedule";
 import { ScheduleType, type EmbedData } from "../db/entities/Template";
 

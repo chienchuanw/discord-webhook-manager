@@ -3,7 +3,7 @@
  * TDD: 先定義預期行為，再實作功能
  */
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
-import { MikroORM, EntityManager } from "@mikro-orm/postgresql";
+import { MikroORM, EntityManager } from "@mikro-orm/sqlite";
 import config from "../mikro-orm.config";
 import { Template, ScheduleType } from "../db/entities/Template";
 import { WebhookSchedule } from "../db/entities/WebhookSchedule";

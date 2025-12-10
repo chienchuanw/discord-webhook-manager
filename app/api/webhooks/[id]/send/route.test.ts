@@ -2,11 +2,20 @@
  * 發送訊息 API 測試
  * TDD: 測試 POST /api/webhooks/[id]/send 端點
  */
-import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from "vitest";
-import { MikroORM } from "@mikro-orm/postgresql";
+import {
+  describe,
+  it,
+  expect,
+  beforeAll,
+  afterAll,
+  beforeEach,
+  vi,
+} from "vitest";
+import { MikroORM } from "@mikro-orm/sqlite";
 import config from "../../../../../mikro-orm.config";
 import { Webhook } from "../../../../../db/entities/Webhook";
 import { MessageLog } from "../../../../../db/entities/MessageLog";
+import { WebhookSchedule } from "../../../../../db/entities/WebhookSchedule";
 import { POST } from "./route";
 
 describe("POST /api/webhooks/[id]/send", () => {
@@ -25,6 +34,7 @@ describe("POST /api/webhooks/[id]/send", () => {
 
     const em = orm.em.fork();
     await em.nativeDelete(MessageLog, {});
+    await em.nativeDelete(WebhookSchedule, {});
     await em.nativeDelete(Webhook, {});
 
     const testWebhook = new Webhook(
@@ -162,4 +172,3 @@ describe("POST /api/webhooks/[id]/send", () => {
     expect(data.error).toBe("Webhook 已停用");
   });
 });
-

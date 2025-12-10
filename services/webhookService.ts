@@ -2,7 +2,7 @@
  * Webhook Service
  * 處理 Webhook 的 CRUD 操作
  */
-import { EntityManager } from "@mikro-orm/postgresql";
+import { EntityManager } from "@mikro-orm/sqlite";
 import { Webhook } from "../db/entities/Webhook";
 
 /* ============================================

@@ -16,7 +16,7 @@ A comprehensive dashboard for managing Discord Webhooks and automating message d
 
 - **Frontend**: Next.js 16 (App Router), React 19, TypeScript
 - **Backend**: Next.js API Routes, Server Actions
-- **Database**: PostgreSQL with MikroORM
+- **Database**: SQLite with MikroORM (embedded, no external database required)
 - **UI Components**: shadcn/ui, Radix UI, Tailwind CSS
 - **Testing**: Vitest with Testing Library
 - **Scheduling**: Vercel Cron Jobs, node-cron
@@ -60,8 +60,9 @@ discord-webhook-manager/
 ### Prerequisites
 
 - Node.js 18+ and pnpm (or npm/yarn)
-- PostgreSQL database
 - Discord Webhook URL (for testing)
+
+**Note**: No external database installation required. The application uses SQLite, which is embedded and stores data locally in the `./data/` directory.
 
 ### Installation
 
@@ -86,16 +87,10 @@ discord-webhook-manager/
 
    Edit `.env.local` and configure:
 
-   - `DATABASE_URL`: PostgreSQL connection string
+   - `DATABASE_PATH`: SQLite database file path (default: `./data/discord-webhook.db`)
    - `NODE_ENV`: Development or production
 
-4. Run database migrations:
-
-   ```bash
-   pnpm migration:up
-   ```
-
-5. Start the development server:
+4. Start the development server:
 
    ```bash
    pnpm dev
@@ -114,9 +109,6 @@ Open [http://localhost:3003](http://localhost:3003) in your browser to access th
 - `pnpm test:run` - Run tests once
 - `pnpm test:coverage` - Generate test coverage report
 - `pnpm lint` - Run ESLint
-- `pnpm migration:create` - Create a new database migration
-- `pnpm migration:up` - Run pending migrations
-- `pnpm migration:down` - Rollback last migration
 
 ### Electron Desktop Application
 
@@ -174,33 +166,24 @@ pnpm test:run          # Single run
 pnpm test:coverage     # With coverage report
 ```
 
-## Database Migrations
+## Database
 
-Create a new migration after schema changes:
+The application uses SQLite as an embedded database. The database file is automatically created and managed:
 
-```bash
-pnpm migration:create
-```
+- **Development**: `./data/discord-webhook.db`
+- **Test**: `./data/test.db`
+- **Production (Electron)**: `~/Library/Application Support/Discord Webhook Manager/discord-webhook.db`
 
-Apply migrations:
-
-```bash
-pnpm migration:up
-```
-
-Rollback the last migration:
-
-```bash
-pnpm migration:down
-```
+**Note**: Database schema is automatically synchronized on application startup. No manual migration commands are required.
 
 ## Running as Electron Desktop Application
 
 ### Prerequisites for Electron
 
 - macOS 10.13 or later
-- PostgreSQL database (local or remote)
 - Node.js 18+
+
+**Note**: No external database installation required. SQLite is embedded in the application.
 
 ### Development Mode
 
@@ -291,48 +274,39 @@ open /Applications/Discord\ Webhook\ Manager.app
 
 ### Environment Variables for Electron
 
-The application requires a `.env.local` file with database configuration.
+The application uses SQLite with automatic database management. Environment variables are optional.
 
 #### For Development
 
-Place `.env.local` in the project root directory:
+Place `.env.local` in the project root directory (optional):
 
 ```bash
-DATABASE_URL=postgresql://user:password@localhost:5432/db_discord_webhook_manager
+DATABASE_PATH=./data/discord-webhook.db
 CRON_SCHEDULE=* * * * *
 CRON_SECRET=development-secret
 ```
 
 #### For Installed Application
 
-After installing the application, create `.env.local` in the application's Resources directory:
+The application automatically stores data in:
 
-**For Apple Silicon (arm64):**
-
-```bash
-~/Library/Application\ Support/Discord\ Webhook\ Manager/.env.local
+```text
+~/Library/Application Support/Discord Webhook Manager/discord-webhook.db
 ```
 
-**For Intel (x64):**
-
-```bash
-~/Library/Application\ Support/Discord\ Webhook\ Manager/.env.local
-```
-
-Or use the command line to create it:
+Optionally, create `.env.local` for custom configuration:
 
 ```bash
 mkdir -p ~/Library/Application\ Support/Discord\ Webhook\ Manager
 cat > ~/Library/Application\ Support/Discord\ Webhook\ Manager/.env.local << EOF
-DATABASE_URL=postgresql://user:password@localhost:5432/db_discord_webhook_manager
 CRON_SCHEDULE=* * * * *
-CRON_SECRET=development-secret
+CRON_SECRET=your-secret-here
 EOF
 ```
 
 **Environment Variables:**
 
-- `DATABASE_URL`: PostgreSQL connection string (required)
+- `DATABASE_PATH`: SQLite database file path (optional, auto-configured)
 - `CRON_SCHEDULE`: Cron expression for scheduling (default: `* * * * *` - every minute)
 - `CRON_SECRET`: Secret token for cron endpoints (default: `development-secret`)
 
@@ -353,8 +327,10 @@ For detailed instructions, see [Vercel Deployment Documentation](https://vercel.
 
 Ensure these variables are set in your production environment:
 
-- `DATABASE_URL`: PostgreSQL connection string
+- `DATABASE_PATH`: SQLite database file path (optional, defaults to `./data/discord-webhook.db`)
 - `NODE_ENV`: Set to "production"
+
+**Note**: For web deployment, SQLite works well for single-instance deployments. For multi-instance or serverless deployments, consider using a cloud database service.
 
 ## Troubleshooting
 
@@ -362,53 +338,37 @@ Ensure these variables are set in your production environment:
 
 #### Application closes immediately after launching
 
-**Cause**: Missing or invalid `.env.local` file
+**Cause**: Application initialization error or permission issue
 
 **Solution**:
 
-1. Verify `.env.local` exists in the correct location:
+1. Check if the data directory is writable:
 
    ```bash
-   cat ~/Library/Application\ Support/Discord\ Webhook\ Manager/.env.local
+   ls -la ~/Library/Application\ Support/Discord\ Webhook\ Manager/
    ```
 
-2. Ensure `DATABASE_URL` is set correctly:
+2. Try launching from terminal to see error messages:
 
    ```bash
-   grep DATABASE_URL ~/Library/Application\ Support/Discord\ Webhook\ Manager/.env.local
-   ```
-
-3. Test the database connection:
-
-   ```bash
-   psql $DATABASE_URL -c "SELECT 1"
+   ./dist/mac-arm64/Discord\ Webhook\ Manager.app/Contents/MacOS/Discord\ Webhook\ Manager
    ```
 
 #### Application fails to start
 
-1. Ensure PostgreSQL is running:
+1. Verify the application bundle is complete:
 
    ```bash
-   pg_isready
+   ls -la /Applications/Discord\ Webhook\ Manager.app/Contents/
    ```
 
-2. Verify database exists:
+2. Check for quarantine attribute (macOS security):
 
    ```bash
-   psql -l | grep db_discord_webhook_manager
+   xattr -d com.apple.quarantine /Applications/Discord\ Webhook\ Manager.app
    ```
 
-3. Create database if it doesn't exist:
-
-   ```bash
-   createdb db_discord_webhook_manager
-   ```
-
-4. Run migrations:
-
-   ```bash
-   pnpm migration:up
-   ```
+3. Ensure sufficient disk space for the database
 
 #### Cron Jobs not executing
 

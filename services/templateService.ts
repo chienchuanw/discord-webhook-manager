@@ -2,7 +2,7 @@
  * Template Service
  * 處理樣板的 CRUD 操作
  */
-import { EntityManager } from "@mikro-orm/postgresql";
+import { EntityManager } from "@mikro-orm/sqlite";
 import {
   Template,
   ScheduleType,

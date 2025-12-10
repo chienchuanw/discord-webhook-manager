@@ -2,7 +2,7 @@
  * Schedule Service
  * 處理預約發送訊息的邏輯
  */
-import { EntityManager } from "@mikro-orm/postgresql";
+import { EntityManager } from "@mikro-orm/sqlite";
 import { Webhook } from "../db/entities/Webhook";
 import {
   MessageLog,
