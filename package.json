@@ -96,6 +96,7 @@
     "appId": "com.chienchuanw.discord-webhook-manager",
     "productName": "Discord Webhook Manager",
     "copyright": "Copyright © 2025 Chien Chuan",
+    "asar": false,
     "directories": {
       "output": "dist",
       "buildResources": "build"

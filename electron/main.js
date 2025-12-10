@@ -56,19 +56,30 @@ function startNextServer() {
     console.log(`📁 環境變數路徑: ${envPath}`);
     console.log(`📦 是否已打包: ${isPackaged}`);
 
-    // Next.js 的啟動路徑
-    const nextBinPath = isPackaged
-      ? path.join(appPath, "node_modules/next/dist/bin/next")
-      : path.join(appPath, "node_modules/next/dist/bin/next");
+    // Next.js CLI 路徑
+    const nextCliPath = path.join(appPath, "node_modules", "next", "dist", "bin", "next");
+
+    console.log(`📁 Next.js CLI 路徑: ${nextCliPath}`);
 
     // 啟動 Next.js 伺服器
-    nextServerProcess = spawn("node", [nextBinPath, "start", "-p", "3000"], {
+    // 使用 process.execPath 來確保使用 Electron 內建的 Node.js
+    nextServerProcess = spawn(process.execPath, [nextCliPath, "start", "-p", "3000"], {
       cwd: appPath,
       env: {
         ...process.env,
         NODE_ENV: "production",
+        ELECTRON_RUN_AS_NODE: "1", // 讓 Electron 作為 Node.js 執行
       },
-      stdio: "inherit",
+      stdio: ["pipe", "pipe", "pipe"],
+    });
+
+    // 輸出 Next.js 伺服器的日誌
+    nextServerProcess.stdout.on("data", (data) => {
+      console.log(`[Next.js] ${data.toString().trim()}`);
+    });
+
+    nextServerProcess.stderr.on("data", (data) => {
+      console.error(`[Next.js Error] ${data.toString().trim()}`);
     });
 
     nextServerProcess.on("error", (err) => {
@@ -76,11 +87,39 @@ function startNextServer() {
       reject(err);
     });
 
-    // 等待伺服器啟動
-    setTimeout(() => {
-      console.log("✅ Next.js 伺服器已啟動");
-      resolve();
-    }, 3000);
+    nextServerProcess.on("close", (code) => {
+      console.log(`[Next.js] 程序已結束，退出碼: ${code}`);
+    });
+
+    // 等待伺服器啟動（檢查 http://localhost:3000 是否可用）
+    const checkServer = (attempt = 0) => {
+      const maxAttempts = 30; // 最多等待 30 秒
+      const http = require("http");
+
+      const req = http.get("http://localhost:3000", (res) => {
+        if (res.statusCode === 200 || res.statusCode === 304) {
+          console.log("✅ Next.js 伺服器已啟動");
+          resolve();
+        } else if (attempt < maxAttempts) {
+          setTimeout(() => checkServer(attempt + 1), 1000);
+        } else {
+          reject(new Error("Next.js 伺服器啟動超時"));
+        }
+      });
+
+      req.on("error", () => {
+        if (attempt < maxAttempts) {
+          setTimeout(() => checkServer(attempt + 1), 1000);
+        } else {
+          reject(new Error("Next.js 伺服器啟動超時"));
+        }
+      });
+
+      req.end();
+    };
+
+    // 開始檢查伺服器狀態
+    setTimeout(() => checkServer(), 2000);
   });
 }
 
