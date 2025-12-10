@@ -70,15 +70,55 @@ function startNextServer() {
 
     // 尋找系統 Node.js 路徑
     // 使用系統 Node.js 而不是 Electron 執行檔，避免在 Dock 顯示額外圖示
-    const { execSync } = require("child_process");
-    let nodePath;
+    // 注意：從 Finder 啟動應用程式時，PATH 環境變數可能不包含 Node.js 路徑
+    // 因此需要檢查常見的 Node.js 安裝位置
+    const fs = require("fs");
+    const os = require("os");
 
-    try {
-      // 嘗試找到系統安裝的 Node.js
-      nodePath = execSync("which node", { encoding: "utf-8" }).trim();
-      console.log(`📁 使用系統 Node.js: ${nodePath}`);
-    } catch {
-      // 如果找不到系統 Node.js，使用 Electron 內建的 Node.js
+    // 常見的 Node.js 安裝路徑（按優先順序）
+    const commonNodePaths = [
+      "/opt/homebrew/bin/node", // macOS Apple Silicon (Homebrew)
+      "/usr/local/bin/node", // macOS Intel (Homebrew) / Linux
+      "/usr/bin/node", // Linux (apt/yum)
+      "/opt/local/bin/node", // MacPorts
+    ];
+
+    let nodePath = null;
+
+    // 先檢查常見的固定路徑
+    for (const p of commonNodePaths) {
+      if (fs.existsSync(p)) {
+        nodePath = p;
+        console.log(`📁 使用系統 Node.js: ${nodePath}`);
+        break;
+      }
+    }
+
+    // 如果找不到，檢查 NVM 安裝的 Node.js
+    if (!nodePath) {
+      const nvmDir = path.join(os.homedir(), ".nvm", "versions", "node");
+      if (fs.existsSync(nvmDir)) {
+        try {
+          // 取得所有已安裝的 Node.js 版本
+          const versions = fs.readdirSync(nvmDir).filter((v) => v.startsWith("v"));
+          if (versions.length > 0) {
+            // 選擇最新版本（按字母排序，v22 > v20 > v18...）
+            versions.sort().reverse();
+            const latestVersion = versions[0];
+            const nvmNodePath = path.join(nvmDir, latestVersion, "bin", "node");
+            if (fs.existsSync(nvmNodePath)) {
+              nodePath = nvmNodePath;
+              console.log(`📁 使用 NVM Node.js: ${nodePath}`);
+            }
+          }
+        } catch (err) {
+          console.log(`⚠️ 無法讀取 NVM 目錄: ${err.message}`);
+        }
+      }
+    }
+
+    // 如果還是找不到系統 Node.js，使用 Electron 內建的 Node.js
+    if (!nodePath) {
       nodePath = process.execPath;
       console.log(`📁 使用 Electron Node.js: ${nodePath}`);
     }
