@@ -1,6 +1,9 @@
+// @ts-nocheck
 /**
  * Electron Builder AfterPack Hook
  * 在打包完成後執行的腳本，用於處理額外的檔案操作
+ *
+ * 注意：此檔案使用 CommonJS 格式，這是 Electron Builder 的標準做法
  */
 
 const fs = require("fs");

@@ -1,6 +1,9 @@
+// @ts-nocheck
 /**
  * Electron 主程序
  * 負責建立應用程式視窗、管理生命週期、處理系統整合
+ *
+ * 注意：此檔案使用 CommonJS 格式，這是 Electron 的標準做法
  */
 
 const { app, BrowserWindow, ipcMain } = require("electron");

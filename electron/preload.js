@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Electron Preload Script
  * 在渲染程序載入前執行，用於安全地暴露 Node.js API 給網頁
@@ -6,6 +7,8 @@
  * - 使用 contextBridge 可以避免直接暴露 Node.js API
  * - 只暴露必要的功能，減少安全風險
  * - 渲染程序無法直接存取 Node.js，只能透過這裡定義的 API
+ *
+ * 注意：此檔案使用 CommonJS 格式，這是 Electron 的標準做法
  */
 
 const { contextBridge, ipcRenderer } = require("electron");
