@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <!-- 允許網路連線（Discord API、PostgreSQL） -->
+    <key>com.apple.security.network.client</key>
+    <true/>
+    
+    <!-- 允許網路伺服器（Next.js 伺服器） -->
+    <key>com.apple.security.network.server</key>
+    <true/>
+    
+    <!-- 允許讀寫使用者選擇的檔案 -->
+    <key>com.apple.security.files.user-selected.read-write</key>
+    <true/>
+    
+    <!-- 允許 JIT 編譯（Node.js 需要） -->
+    <key>com.apple.security.cs.allow-jit</key>
+    <true/>
+    
+    <!-- 允許載入未簽名的程式庫（開發用） -->
+    <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
+    <true/>
+    
+    <!-- 允許除錯（開發用） -->
+    <key>com.apple.security.cs.disable-library-validation</key>
+    <true/>
+  </dict>
+</plist>
+
