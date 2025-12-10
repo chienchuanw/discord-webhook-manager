@@ -68,16 +68,30 @@ function startNextServer() {
 
     console.log(`📁 Next.js CLI 路徑: ${nextCliPath}`);
 
+    // 尋找系統 Node.js 路徑
+    // 使用系統 Node.js 而不是 Electron 執行檔，避免在 Dock 顯示額外圖示
+    const { execSync } = require("child_process");
+    let nodePath;
+
+    try {
+      // 嘗試找到系統安裝的 Node.js
+      nodePath = execSync("which node", { encoding: "utf-8" }).trim();
+      console.log(`📁 使用系統 Node.js: ${nodePath}`);
+    } catch {
+      // 如果找不到系統 Node.js，使用 Electron 內建的 Node.js
+      nodePath = process.execPath;
+      console.log(`📁 使用 Electron Node.js: ${nodePath}`);
+    }
+
     // 啟動 Next.js 伺服器
-    // 使用 process.execPath 來確保使用 Electron 內建的 Node.js
-    nextServerProcess = spawn(process.execPath, [nextCliPath, "start", "-p", "3000"], {
+    // 使用系統 Node.js 來避免在 Dock 顯示額外的 "exec" 圖示
+    nextServerProcess = spawn(nodePath, [nextCliPath, "start", "-p", "3000"], {
       cwd: appPath,
       env: {
         ...process.env,
         NODE_ENV: "production",
-        ELECTRON_RUN_AS_NODE: "1", // 讓 Electron 作為 Node.js 執行
-        // macOS: 隱藏子程序的 Dock 圖示
-        LSBackgroundOnly: "1",
+        // 只有在使用 Electron 執行檔時才需要這個環境變數
+        ...(nodePath === process.execPath ? { ELECTRON_RUN_AS_NODE: "1" } : {}),
       },
       stdio: ["pipe", "pipe", "pipe"],
       // Windows: 隱藏子程序的視窗
