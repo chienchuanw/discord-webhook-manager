@@ -111,6 +111,11 @@
       "!db/migrations/**/*",
       "mikro-orm.config.ts"
     ],
+    "asarUnpack": [
+      "node_modules/**/*.node",
+      "node_modules/**/*.so",
+      "node_modules/**/*.dylib"
+    ],
     "extraResources": [
       {
         "from": ".env.local",
