@@ -20,6 +20,7 @@ A comprehensive dashboard for managing Discord Webhooks and automating message d
 - **UI Components**: shadcn/ui, Radix UI, Tailwind CSS
 - **Testing**: Vitest with Testing Library
 - **Scheduling**: Vercel Cron Jobs, node-cron
+- **Desktop**: Electron (for macOS local application)
 
 ## Project Structure
 
@@ -38,6 +39,11 @@ discord-webhook-manager/
 ├── db/                    # Database layer
 │   ├── entities/          # MikroORM entity definitions
 │   └── migrations/        # Database migrations
+├── electron/              # Electron desktop application
+│   ├── main.js            # Electron main process
+│   ├── preload.js         # Electron preload script for IPC
+│   ├── jsconfig.json      # JavaScript configuration for Electron
+│   └── scripts/           # Build scripts
 ├── services/              # Business logic services
 │   ├── webhookService.ts
 │   ├── templateService.ts
@@ -99,6 +105,8 @@ Open [http://localhost:3003](http://localhost:3003) in your browser to access th
 
 ## Available Scripts
 
+### Web Development
+
 - `pnpm dev` - Start development server on port 3003
 - `pnpm build` - Build for production
 - `pnpm start` - Start production server
@@ -109,6 +117,12 @@ Open [http://localhost:3003](http://localhost:3003) in your browser to access th
 - `pnpm migration:create` - Create a new database migration
 - `pnpm migration:up` - Run pending migrations
 - `pnpm migration:down` - Rollback last migration
+
+### Electron Desktop Application
+
+- `pnpm electron:dev` - Start Electron development mode (includes Next.js dev server)
+- `pnpm electron:build` - Build Next.js and package Electron application
+- `pnpm electron:build:dir` - Build Electron app without creating installers (for testing)
 
 ## Development Workflow
 
@@ -180,11 +194,65 @@ Rollback the last migration:
 pnpm migration:down
 ```
 
+## Running as Electron Desktop Application
+
+### Prerequisites for Electron
+
+- macOS 10.13 or later
+- PostgreSQL database (local or remote)
+- Node.js 18+
+
+### Development Mode
+
+Start the Electron application in development mode:
+
+```bash
+pnpm electron:dev
+```
+
+This command:
+
+1. Starts the Next.js development server on port 3003
+2. Launches the Electron application window
+3. Enables hot reload for code changes
+4. Activates local Cron Jobs for scheduling
+
+### Building for Production
+
+Build the Electron application for macOS:
+
+```bash
+pnpm electron:build
+```
+
+This creates:
+
+- `.app` bundle in `dist/mac/`
+- `.dmg` installer in `dist/`
+
+### Testing the Build
+
+Test the packaged application without creating installers:
+
+```bash
+pnpm electron:build:dir
+```
+
+The application will be available in `dist/mac/` directory.
+
+### Environment Variables for Electron
+
+Ensure these variables are set in `.env.local`:
+
+- `DATABASE_URL`: PostgreSQL connection string
+- `CRON_SCHEDULE`: Cron expression for scheduling (default: `* * * * *` - every minute)
+- `CRON_SECRET`: Secret token for cron endpoints (default: `development-secret`)
+
 ## Deployment
 
-### Deploy to Vercel
+### Deploy to Vercel (Web)
 
-The easiest way to deploy is using [Vercel](https://vercel.com):
+The easiest way to deploy the web version is using [Vercel](https://vercel.com):
 
 1. Push your code to GitHub
 2. Import the repository in Vercel
@@ -193,12 +261,44 @@ The easiest way to deploy is using [Vercel](https://vercel.com):
 
 For detailed instructions, see [Vercel Deployment Documentation](https://vercel.com/docs/frameworks/nextjs).
 
-### Environment Variables for Production
+### Environment Variables for Production (Web)
 
 Ensure these variables are set in your production environment:
 
 - `DATABASE_URL`: PostgreSQL connection string
 - `NODE_ENV`: Set to "production"
+
+## Troubleshooting
+
+### Electron Application Issues
+
+#### Application fails to start
+
+1. Ensure PostgreSQL is running:
+
+   ```bash
+   pg_isready
+   ```
+
+2. Verify database exists:
+
+   ```bash
+   psql -l | grep db_discord_webhook_manager
+   ```
+
+3. Run migrations:
+
+   ```bash
+   pnpm migration:up
+   ```
+
+#### Cron Jobs not executing
+
+1. Check `.env.local` for `CRON_SCHEDULE` variable
+2. Verify the cron expression is valid
+3. Check application logs for errors
+
+For more detailed troubleshooting, see [ELECTRON_TESTING.md](./ELECTRON_TESTING.md).
 
 ## Contributing
 
