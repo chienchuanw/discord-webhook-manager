@@ -2,6 +2,7 @@
   "name": "discord-webhook-manager",
   "version": "0.1.0",
   "private": true,
+  "main": "electron/main.js",
   "mikro-orm": {
     "useTsNode": true,
     "tsConfigPath": "./tsconfig.json",
@@ -12,14 +13,19 @@
   "scripts": {
     "dev": "next dev -p 3003",
     "build": "next build",
-    "start": "next start",
+    "start": "next start -p 3003",
     "lint": "eslint",
     "test": "vitest",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
     "migration:create": "mikro-orm migration:create",
     "migration:up": "mikro-orm migration:up",
-    "migration:down": "mikro-orm migration:down"
+    "migration:down": "mikro-orm migration:down",
+    "electron": "electron .",
+    "electron:dev": "concurrently \"cross-env NODE_ENV=development pnpm dev\" \"wait-on http://localhost:3003 && cross-env NODE_ENV=development electron .\"",
+    "electron:build": "pnpm build && electron-builder",
+    "electron:build:mac": "pnpm build && electron-builder --mac",
+    "electron:build:dir": "pnpm build && electron-builder --dir"
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^7.1.0",
@@ -71,7 +77,11 @@
     "@types/uuid": "^11.0.0",
     "@vitejs/plugin-react": "^5.1.1",
     "baseline-browser-mapping": "^2.9.2",
+    "concurrently": "^9.2.1",
+    "cross-env": "^10.1.0",
     "dotenv": "^17.2.3",
+    "electron": "^39.2.6",
+    "electron-builder": "^26.0.12",
     "eslint": "^9",
     "eslint-config-next": "16.0.4",
     "jsdom": "^27.2.0",
@@ -79,6 +89,79 @@
     "ts-node": "^10.9.2",
     "tsx": "^4.20.6",
     "typescript": "^5.9.3",
-    "vitest": "^4.0.14"
+    "vitest": "^4.0.14",
+    "wait-on": "^9.0.3"
+  },
+  "build": {
+    "appId": "com.chienchuanw.discord-webhook-manager",
+    "productName": "Discord Webhook Manager",
+    "copyright": "Copyright © 2025 Chien Chuan",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "electron/**/*",
+      ".next/**/*",
+      "node_modules/**/*",
+      "package.json",
+      "public/**/*",
+      "db/**/*",
+      "!db/migrations/**/*",
+      "mikro-orm.config.ts"
+    ],
+    "extraResources": [
+      {
+        "from": ".env.local",
+        "to": ".env.local",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
+    "mac": {
+      "category": "public.app-category.developer-tools",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ],
+      "icon": "build/icon.icns",
+      "darkModeSupport": true,
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist"
+    },
+    "dmg": {
+      "contents": [
+        {
+          "x": 130,
+          "y": 220
+        },
+        {
+          "x": 410,
+          "y": 220,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ],
+      "window": {
+        "width": 540,
+        "height": 380
+      }
+    },
+    "afterPack": "electron/scripts/afterPack.js"
   }
 }

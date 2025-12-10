@@ -1,9 +1,10 @@
 /**
  * Local Cron Service
- * 在開發環境中模擬 Vercel Cron Jobs
+ * 在開發環境和 Electron 環境中提供本地排程功能
  *
  * 使用 node-cron 套件定期執行排程處理
- * 僅在 NODE_ENV === 'development' 時啟用
+ * - 開發環境：模擬 Vercel Cron Jobs
+ * - Electron 環境：提供本地排程功能（替代 Vercel Cron）
  *
  * 環境變數：
  * - CRON_SCHEDULE: cron 表達式，預設每分鐘執行
@@ -121,6 +122,9 @@ export function startLocalCron(): void {
     return;
   }
 
+  // 檢查是否為 Electron 環境
+  const isElectron = process.versions && "electron" in process.versions;
+
   // 從環境變數讀取 cron 表達式，預設每分鐘執行
   const cronSchedule = process.env.CRON_SCHEDULE || DEFAULT_CRON_SCHEDULE;
 
@@ -136,7 +140,11 @@ export function startLocalCron(): void {
     : DEFAULT_CRON_SCHEDULE;
 
   isStarted = true;
-  console.log(`[Local Cron] 開發環境 cron 服務已啟動，排程: ${validSchedule}`);
+
+  const envType = isElectron ? "Electron" : "開發";
+  console.log(
+    `[Local Cron] ${envType}環境 cron 服務已啟動，排程: ${validSchedule}`
+  );
 
   // 根據環境變數設定的頻率執行
   cron.schedule(validSchedule, () => {
